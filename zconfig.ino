@@ -1,6 +1,8 @@
 
 #include "control.h"
 #include "io.h"
+#include "capture.h"
+
 // zconfig: since we are referencing variables defined in other files 
 
 #define PREAMBLE_VALUE	2859

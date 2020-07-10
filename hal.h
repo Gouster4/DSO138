@@ -1,6 +1,6 @@
 
-#ifndef HAL
-#define HAL
+#ifndef HAL_H
+#define HAL_H
 
 #include"Arduino.h"
 

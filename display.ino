@@ -1,7 +1,7 @@
 
 #include "interface.h"
 #include "display.h"
- 
+#include "capture.h" 
 
 Adafruit_TFTLCD_8bit_STM32 tft;
 
@@ -593,7 +593,7 @@ void drawStats()	{
 
 
 // ------------------------
-void calculateStats()	{
+void calculateStats(void)	{
 // ------------------------
 	// extract waveform stats
 	int16_t Vmax = -ADC_MAX_VAL, Vmin = ADC_MAX_VAL;
