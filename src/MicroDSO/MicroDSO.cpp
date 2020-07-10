@@ -39,7 +39,7 @@ void MicroDSO_Setup(void)  {
 
 
 // ------------------------
-void MicroDSO_Loop(void)	{
+void MicroDSO_Loop(void){
 // ------------------------
 	// start by reading the state of analog system
 	readInpSwitches();
