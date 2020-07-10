@@ -3,7 +3,7 @@
 #include "io.h"
 #include "variables.h"
 #include "display.h"
-#include "control.h"
+#include "DSO.h"
 #include "interface.h"
 #include "zconfig.h"
 #include "capture.h"

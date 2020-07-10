@@ -1,6 +1,6 @@
 #include "hal.h"
 #include "variables.h" 
-#include "control.h"
+#include "DSO.h"
 #include "io.h"
 #include "capture.h"
 #include "interface.h"
