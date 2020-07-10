@@ -12,8 +12,8 @@ extern uint8_t triggerType;
 
 void setTriggerType(uint8_t tType);
 
-void DSO_Setup(void);
+void MicroDSO_Setup(void);
 	
-void DSO_Loop(void);  
+void MicroDSO_Loop(void);  
 
 #endif

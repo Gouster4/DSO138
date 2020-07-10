@@ -1,9 +1,9 @@
-#include "DSO.h"
+#include "MicroDSO.h"
 
 // ------------------------
 void setup()	{
 // ------------------------
-  DSO_Setup();
+  MicroDSO_Setup();
 }
 
 
@@ -11,5 +11,5 @@ void setup()	{
 // ------------------------
 void loop()	{
 // ------------------------
-	DSO_Loop();
+	MicroDSO_Loop();
 }

@@ -1,5 +1,5 @@
 
-#include "DSO.h"
+#include "MicroDSO.h"
 #include "variables.h"
 #include "io.h"
 #include "display.h"
@@ -21,7 +21,7 @@ void setTriggerType(uint8_t tType)	{
 }
 
 // ------------------------
-void DSO_Setup(void)  {
+void MicroDSO_Setup(void)  {
 // ------------------------
   DBG_INIT(SERIAL_BAUD_RATE);
   DBG_PRINT("Dual channel O Scope with two logic channels, ver: ");
@@ -39,7 +39,7 @@ void DSO_Setup(void)  {
 
 
 // ------------------------
-void DSO_Loop(void)	{
+void MicroDSO_Loop(void)	{
 // ------------------------
 	// start by reading the state of analog system
 	readInpSwitches();

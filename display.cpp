@@ -3,7 +3,7 @@
 #include "interface.h"
 #include "display.h"
 #include "capture.h" 
-#include "DSO.h"
+#include "MicroDSO.h"
 #include "io.h"
 
 #include <Adafruit_GFX.h>
