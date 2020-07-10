@@ -1,8 +1,30 @@
 
+#include "hal.h"
 #include "io.h"
+#include "variables.h"
+#include "display.h"
+#include "control.h"
+#include "interface.h"
+#include "zconfig.h"
+#include "capture.h"
+
+void resetParam(void);
+void changeXCursor(int16_t xPos);
+void changeYCursor(uint8_t num, int16_t yPos);
+void calculateTraceZero(int waveID);
+void incrementTimeBase(void);
+void decrementTimeBase(void);
+void incrementTT(void);
+void decrementTT(void);
+void setTriggerRising(void);
+void setTriggerFalling(void);
+void incrementTLevel(void);
+void decrementTLevel(void);
+void incrementWaves(void);
+void decrementWaves(void);
 
 // ------------------------
-const char* getTimebaseLabel()	{
+const char* getTimebaseLabel(void)	{
 // ------------------------
 	return tbNames[currentTimeBase];
 }
@@ -80,7 +102,7 @@ void readESwitchISR(void)	{
 
 
 // ------------------------
-void resetParam()	{
+void resetParam(void)	{
 // ------------------------
 	// which label has current focus
 	switch(currentFocus)	{
@@ -212,7 +234,7 @@ void encoderChanged(int steps)	{
 
 
 // ------------------------
-void incrementTLevel()	{
+void incrementTLevel(void)	{
 // ------------------------
 	int16_t tL = getTriggerLevel();
 	setTriggerLevel(tL + 5);
@@ -223,7 +245,7 @@ void incrementTLevel()	{
 
 
 // ------------------------
-void decrementTLevel()	{
+void decrementTLevel(void)	{
 // ------------------------
 	int16_t tL = getTriggerLevel();
 	setTriggerLevel(tL - 5);
@@ -235,7 +257,7 @@ void decrementTLevel()	{
 // A1, D1, D2, A2 
 // 0, 2, 3, 1
 // ------------------------
-void incrementWaves()	{
+void incrementWaves(void)	{
 // ------------------------
 	// add more waves
 	if(waves[1])	{
@@ -261,7 +283,7 @@ void incrementWaves()	{
 
 
 // ------------------------
-void decrementWaves()	{
+void decrementWaves(void)	{
 // ------------------------
 	// remove waves
 	if(waves[1])	{
@@ -286,12 +308,12 @@ void decrementWaves()	{
 
 
 // ------------------------
-void setTriggerRising()	{
+void setTriggerRising(void)	{
 // ------------------------
 	if(triggerRising)
 		return;
 	
-	setTriggerRising(true);
+	triggerRising=true;
 	saveParameter(PARAM_TRIGDIR, triggerRising);
 	repaintLabels();
 }
@@ -299,12 +321,12 @@ void setTriggerRising()	{
 
 
 // ------------------------
-void setTriggerFalling()	{
+void setTriggerFalling(void)	{
 // ------------------------
 	if(!triggerRising)
 		return;
 	
-	setTriggerRising(false);
+	triggerRising=false;
 	saveParameter(PARAM_TRIGDIR, triggerRising);
 	repaintLabels();
 }
@@ -313,7 +335,7 @@ void setTriggerFalling()	{
 
 
 // ------------------------
-void incrementTT()	{
+void incrementTT(void)	{
 // ------------------------
 	if(triggerType == TRIGGER_SINGLE)
 		return;
@@ -327,7 +349,7 @@ void incrementTT()	{
 
 
 // ------------------------
-void decrementTT()	{
+void decrementTT(void)	{
 // ------------------------
 	if(triggerType == TRIGGER_AUTO)
 		return;
@@ -341,7 +363,7 @@ void decrementTT()	{
 
 
 // ------------------------
-void incrementTimeBase()	{
+void incrementTimeBase(void)	{
 // ------------------------
 	if(currentTimeBase == T50MS)
 		return;
@@ -352,7 +374,7 @@ void incrementTimeBase()	{
 
 
 // ------------------------
-void decrementTimeBase()	{
+void decrementTimeBase(void)	{
 // ------------------------
 	if(currentTimeBase == T20US)
 		return;

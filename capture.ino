@@ -1,5 +1,6 @@
 
-#include"hal.h" 
+#include "hal.h" 
+#include "interface.h"
 
 // sampling delay table in quarter-microseconds
 const int16_t samplingDelay[] =   {-1,  0, 14, 38, 86, 229, 468, 948, 2385, 4776, 9570, 23940};
