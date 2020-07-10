@@ -70,8 +70,8 @@ void initIO(void)	{
 // ------------------------
 void setADC(void)	{
 // ------------------------
-	int pinMapADCin1 = PIN_MAP[AN_CH1].adc_channel;
-	int pinMapADCin2 = PIN_MAP[AN_CH2].adc_channel;
+	int pinMapADCin1 = AN_CH1_channel;
+	int pinMapADCin2 = AN_CH2_channel;
 	
 	// opamp is low impedance, set fastest sampling 
 	adc_set_sample_rate(ADC1, ADC_SMPR_1_5);
@@ -150,19 +150,19 @@ void readInpSwitches(void)	{
 	
 	// change to switch 1 
 	//ADC1regs->SQR3 = PIN_MAP[VSENSSEL2].adc_channel;
-  adc_set_channel(ADC1,PIN_MAP[VSENSSEL2].adc_channel );
+  adc_set_channel(ADC1, VSENSSEL2_channel );
 	delayMicroseconds(100);
 	//pos2 = (uint16_t) (ADC1regs->DR & ADC_DR_DATA);
 	pos2 = adc_read(ADC1);
   
 	//ADC1regs->SQR3 = PIN_MAP[VSENSSEL1].adc_channel;
-  adc_set_channel(ADC1, PIN_MAP[VSENSSEL1].adc_channel );
+  adc_set_channel(ADC1, VSENSSEL1_channel );
 	delayMicroseconds(100);
 	//pos1 = (uint16_t) (ADC1regs->DR & ADC_DR_DATA);
   pos1 = adc_read(ADC1);
 	
 	//ADC1regs->SQR3 = PIN_MAP[CPLSEL].adc_channel;
-  adc_set_channel(ADC1, PIN_MAP[CPLSEL].adc_channel );
+  adc_set_channel(ADC1, CPLSEL_channel );
 	delayMicroseconds(100);
 	//cpl = (uint16_t) (ADC1regs->DR & ADC_DR_DATA);
   cpl = adc_read(ADC1);
@@ -204,6 +204,6 @@ void readInpSwitches(void)	{
 	
 	// switch ADC1 back to capture channel
 	//ADC1regs->SQR3 = PIN_MAP[AN_CH1].adc_channel;
-  adc_set_channel(ADC1,  PIN_MAP[AN_CH1].adc_channel );
+        adc_set_channel(ADC1,  AN_CH1_channel );
 	delayMicroseconds(100);
 }

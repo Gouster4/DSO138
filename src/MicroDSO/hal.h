@@ -4,18 +4,22 @@
 
 #include"Arduino.h"
 
-#define TIMER_OUTPUTCOMPARE 0x01
+#define TIMER_OUTPUTCOMPARE TIMER_OUTPUT_COMPARE
 
 #define PWM 0
 #define ADC_SMPR_1_5 0x01
 
+typedef unsigned long long uint32;
 typedef unsigned int uint16;
 typedef unsigned char uint8;
 
 class timer
 {
-  public:
-  void setChannel1Mode(int flags);
+  HardwareTimer *Tim;
+  public:  
+  timer(TIM_TypeDef *Instance);
+  ~timer();
+  void setChannel1Mode(TimerModes_t flags);
   void pause(void);
   void resume(void);
   void setCompare1(unsigned int);
@@ -34,7 +38,6 @@ typedef struct
 int adc_channel;
 }pins;
 
-extern pins PIN_MAP[50];
 
 void adc_calibrate(ADC_TypeDef * adc);
 void adc_set_sample_rate(ADC_TypeDef * adc, unsigned int rate);

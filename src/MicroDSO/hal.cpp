@@ -2,56 +2,96 @@
 #include "hal.h"
 
 
-timer Timer2;
-timer Timer3;
-timer Timer4;
-
-pins PIN_MAP[50];
-
+timer Timer2(TIM2);
+timer Timer3(TIM3);
+timer Timer4(TIM4);
 
 //timer 
 
-void timer::setChannel1Mode(int flags)
+timer::timer(TIM_TypeDef *Instance)
 {
+  Tim = new HardwareTimer(Instance);
+}
+
+timer::~timer()
+{
+  delete Tim;
+}
+
+void timer::setChannel1Mode(TimerModes_t flags)
+{
+  Tim->setMode(1, flags);
 }
 
 void timer::pause(void)
 {
+  Tim->pause();
 }
 
 void timer::resume(void)
 {
+  Tim->resume();
 }
 
 void timer::setCompare1(unsigned int val)
 {
+  Tim->setCaptureCompare(1, val);
 }
 
 void timer::attachCompare1Interrupt( void (*fptr)() )
 {
+  Tim->attachInterrupt(1, fptr);
 }
  
 void timer::setCount(unsigned int val)
 {
+ Tim->setCount(val);
 }
 
 void timer::setPeriod(unsigned int val)
 {
+ Tim->setOverflow(val);
 }
   
 
 //ADC
 
+/*
+void adc_init(adc_dev *dev) {
+    rcc_clk_enable(dev->clk_id);
+    rcc_reset_dev(dev->clk_id);
+}
+
+*/
+
 void adc_calibrate(ADC_TypeDef * adc)
 {
 }
 
-void adc_set_sample_rate(ADC_TypeDef *adc, unsigned int rate)
+void adc_set_sample_rate(ADC_TypeDef *adc, unsigned int smp_rate)
 {
+    uint32 adc_smpr1_val = 0, adc_smpr2_val = 0;
+    int i;
+
+    for (i = 0; i < 10; i++) {
+        if (i < 8) {
+            /* ADC_SMPR1 determines sample time for channels [10,17] */
+            adc_smpr1_val |= smp_rate << (i * 3);
+        }
+        /* ADC_SMPR2 determines sample time for channels [0,9] */
+        adc_smpr2_val |= smp_rate << (i * 3);
+    }
+
+    adc->SMPR1 = adc_smpr1_val;
+    adc->SMPR2 = adc_smpr2_val;
 }
 
 void adc_set_reg_seqlen(ADC_TypeDef *adc, unsigned int len)
 {
+    uint32 tmp = adc->SQR1;
+    tmp &= ~ADC_SQR1_L;
+    tmp |= (len - 1) << 20;
+    adc->SQR1 = tmp;
 }
   
 void adc_set_channel(ADC_TypeDef * adc , unsigned int channel)

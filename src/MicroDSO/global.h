@@ -28,15 +28,20 @@
 #define VGEN			PB9		// used to generate negative voltage in DSO138
 
 // captured inputs
-#define AN_CH1 			PA0		// analog channel 1
-#define AN_CH2 			PA4		// analog channel 2
-#define DG_CH1 			PA13	// digital channel 1 - 5V tolerant pin. Pin mask throughout code has to match digital pin
-#define DG_CH2 			PA14	// digital channel 2 - 5V tolerant pin. Pin mask throughout code has to match digital pin
+#define AN_CH1 		PA0	// analog channel 1
+#define AN_CH2 		PA4	// analog channel 2
+#define AN_CH1_channel 	1	// analog channel 1
+#define AN_CH2_channel		4	// analog channel 2
+#define DG_CH1 		PA13	// digital channel 1 - 5V tolerant pin. Pin mask throughout code has to match digital pin
+#define DG_CH2 		PA14	// digital channel 2 - 5V tolerant pin. Pin mask throughout code has to match digital pin
 
 // misc analog inputs
 #define VSENSSEL1 		PA2
 #define VSENSSEL2		PA1
 #define CPLSEL			PA3
+#define VSENSSEL1_channel 	2
+#define VSENSSEL2_channel	1
+#define CPLSEL_channel		3
 
 // switches
 #define ENCODER_SW		PB12
