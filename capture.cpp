@@ -4,6 +4,7 @@
 #include "interface.h"
 #include "capture.h"
 #include "display.h"
+
  
 void triggerISR(void);
 void startScanTimeout(int16_t mSec);

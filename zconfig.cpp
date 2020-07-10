@@ -1,10 +1,18 @@
-
+#include "hal.h"
+#include "variables.h" 
 #include "control.h"
 #include "io.h"
 #include "capture.h"
 #include "interface.h"
+#include "zconfig.h"
+#include "display.h"
+
+#include <EEPROM.h>
 
 // zconfig: since we are referencing variables defined in other files 
+
+
+void formatSaveConfig(void);
 
 #define PREAMBLE_VALUE	2859
 
@@ -91,7 +99,7 @@ void loadConfig(bool reset)	{
 
 
 // ------------------------
-void loadDefaults()	{
+void loadDefaults(void)	{
 // ------------------------
 	DBG_PRINTLN("Loading defaults");
 
@@ -124,7 +132,7 @@ void loadDefaults()	{
 
 
 // ------------------------
-void formatSaveConfig()	{
+void formatSaveConfig(void)	{
 // ------------------------
 	DBG_PRINTLN("Formatting EEPROM");
 	//FIXME EEPROM.format();

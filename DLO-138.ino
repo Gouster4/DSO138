@@ -1,9 +1,9 @@
-#include <EEPROM.h>
 #include "global.h"
 #include "variables.h"
 #include "control.h"
 #include "io.h"
 #include "display.h"
+#include "zconfig.h"
 
 // ------------------------
 void setup()	{
