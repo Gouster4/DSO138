@@ -31,11 +31,11 @@ int16_t xCursor;
 // controls the vertical positioning of waveform
 int16_t yCursors[4];
 // controls which waveforms are displayed
-boolean waves[4];
+bool waves[4];
 // prints waveform statistics on screen
-boolean printStats = true;
+bool printStats = true;
 // repaint the labels on screen in draw loop
-boolean paintLabels = false;
+bool paintLabels = false;
 
 // labels around the grid
 enum {L_timebase, L_triggerType, L_triggerEdge, L_triggerLevel, L_waves, L_window, L_vPos1, L_vPos2, L_vPos3, L_vPos4};
@@ -67,7 +67,7 @@ void focusNextLabel()	{
 
 
 // ------------------------
-void repaintLabels()	{
+void repaintLabels(void)	{
 // ------------------------
 	paintLabels = true;
 }
@@ -93,9 +93,9 @@ void initDisplay()	{
 
 
 // ------------------------
-void drawWaves()	{
+void drawWaves(void)	{
 // ------------------------
-	static boolean printStatsOld = false;
+	static bool printStatsOld = false;
 
 	if(printStatsOld && !printStats)
 		clearStats();
@@ -123,7 +123,7 @@ void drawWaves()	{
 
 
 // ------------------------
-void clearWaves()	{
+void clearWaves(void)	{
 // ------------------------
 	// clear screen
 	tft.fillScreen(ILI9341_BLACK);
@@ -134,10 +134,10 @@ void clearWaves()	{
 
 
 
-boolean cDisplayed = false;
+bool cDisplayed = false;
 
 // ------------------------
-void indicateCapturing()	{
+void indicateCapturing(void)	{
 // ------------------------
 	if((currentTimeBase > T2MS) || (triggerType != TRIGGER_AUTO))	{
 		cDisplayed = true;
@@ -150,7 +150,7 @@ void indicateCapturing()	{
 
 
 // ------------------------
-void indicateCapturingDone()	{
+void indicateCapturingDone(void)	{
 // ------------------------
 	if(cDisplayed)	{
 		tft.fillRect(140, 20, 66, 8, ILI9341_BLACK);
@@ -171,7 +171,7 @@ void indicateCapturingDone()	{
 // ------------------------
 void clearNDrawSignals()	{
 // ------------------------
-	static boolean wavesOld[4] = {false,};
+	static bool wavesOld[4] = {false,};
 	static int16_t yCursorsOld[4];
 	
 	// snap the values to prevent interrupt from changing mid-draw
@@ -179,7 +179,7 @@ void clearNDrawSignals()	{
 	int16_t zeroVoltageA1Snap = zeroVoltageA1;
 	int16_t zeroVoltageA2Snap = zeroVoltageA2;
 	int16_t yCursorsSnap[4];
-	boolean wavesSnap[4];
+	bool wavesSnap[4];
 	yCursorsSnap[0] = yCursors[0];
 	yCursorsSnap[1] = yCursors[1];
 	yCursorsSnap[2] = yCursors[2];
@@ -330,7 +330,7 @@ inline void plotLineSegment(int16_t transposedPt1, int16_t transposedPt2,  int i
 
 
 // ------------------------
-void drawVCursor(int channel, uint16_t color, boolean highlight)	{
+void drawVCursor(int channel, uint16_t color, bool highlight)	{
 // ------------------------
 	int cPos = GRID_HEIGHT + vOffset + yCursors[channel];
     tft.fillTriangle(0, cPos - 5, hOffset, cPos, 0, cPos + 5, color);
@@ -366,7 +366,7 @@ void drawGrid()	{
 
 
 // ------------------------
-void drawLabels()	{
+void drawLabels(void)	{
 // ------------------------
 	// draw the static labels around the grid
 
@@ -524,7 +524,7 @@ void drawLabels()	{
 void drawStats()	{
 // ------------------------
 	static long lastCalcTime = 0;
-	boolean clearStats = false;
+	bool clearStats = false;
 	
 	// calculate stats once a while
 	if(millis() - lastCalcTime > 300)	{
@@ -625,8 +625,8 @@ void calculateStats()	{
 
 	// find out frequency
 	uint16_t fVavr = freqSumSamples/NUM_SAMPLES;
-	boolean dnWave = (ch1Capture[sIndex] < fVavr - 10);
-	boolean firstOne = true;
+	bool dnWave = (ch1Capture[sIndex] < fVavr - 10);
+	bool firstOne = true;
 	uint16_t cHigh = 0;
 
 	uint16_t sumCW = 0;
@@ -683,7 +683,7 @@ void calculateStats()	{
 
 
 // ------------------------
-void drawVoltage(float volt, int y, boolean mvRange)	{
+void drawVoltage(float volt, int y, bool mvRange)	{
 // ------------------------
 	// text is standard 5 px wide
 	int numDigits = 1;
@@ -764,5 +764,3 @@ void banner()	{
 	tft.setCursor(30, 200);
 	tft.print("GNU GENERAL PUBLIC LICENSE Version 3");
 }
-
-

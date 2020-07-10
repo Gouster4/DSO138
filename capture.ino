@@ -1,17 +1,19 @@
 
+#include"hal.h" 
+
 // sampling delay table in quarter-microseconds
 const int16_t samplingDelay[] =   {-1,  0, 14, 38, 86, 229, 468, 948, 2385, 4776, 9570, 23940};
 const uint16_t timeoutDelayMs[] = {50, 50, 50, 100, 100, 100, 150, 250, 500, 1000, 2000, 4500};
 
 int16_t sDly, tDly;
-boolean minSamplesAcquired;
-boolean triggerRising;
+bool minSamplesAcquired;
+bool triggerRising;
 long prevTime = 0;
 
 // hold pointer references for updating variables in memory
 uint16_t *sIndexPtr = &sIndex;
-volatile boolean *keepSamplingPtr = &keepSampling;
-volatile boolean *triggeredPtr = &triggered;
+volatile bool *keepSamplingPtr = &keepSampling;
+volatile bool *triggeredPtr = &triggered;
 
 
 
@@ -29,7 +31,7 @@ void setSamplingRate(uint8_t timeBase)	{
 
 
 // ------------------------
-void setTriggerRising(boolean rising)	{
+void setTriggerRising(bool rising)	{
 // ------------------------
 	// trigger changed, break out from previous sampling loop
 	keepSampling = false;
@@ -45,7 +47,7 @@ void setTriggerRising(boolean rising)	{
 
 
 // ------------------------
-void sampleWaves(boolean wTimeout)	{
+void sampleWaves(bool wTimeout)	{
 // ------------------------
 	if(wTimeout)
 		// setup timed interrupt to terminate scanning if trigger not found
@@ -358,7 +360,7 @@ inline void snapMicros()	{
 
 
 // ------------------------
-void dumpSamples()	{
+void dumpSamples(void)	{
 // ------------------------
 	float timePerSample = ((float)samplingTime) / NUM_SAMPLES;
 	DBG_PRINT("Net sampling time (us): "); DBG_PRINTLN(samplingTime);
@@ -441,4 +443,3 @@ void printSample(uint16_t k, float timeStamp) {
 	
 	DBG_PRINTLN();
 }
-

@@ -58,26 +58,26 @@
 	#define CS_ACTIVE    digitalWrite(TFT_CS, LOW)
 	#define CS_IDLE      digitalWrite(TFT_CS, HIGH)
 #else
-	#define TFT_RD_MASK    BIT10
-	#define TFT_WR_MASK    BIT15
-	#define TFT_RS_MASK    BIT14
-	#define TFT_CS_MASK    BIT13
+	#define TFT_RD_MASK    (1L<<10)
+	#define TFT_WR_MASK    (1L<<15)
+	#define TFT_RS_MASK    (1L<<14)
+	#define TFT_CS_MASK    (1L<<13)
 
 	// use fast bit toggling, very fast speed!
-	#define RD_ACTIVE    { GPIOB->regs->BRR  = TFT_RD_MASK; }
-	#define RD_IDLE      { GPIOB->regs->BSRR = TFT_RD_MASK; }
-	#define WR_ACTIVE    { GPIOC->regs->BRR  = TFT_WR_MASK; }
-	#define WR_IDLE      { GPIOC->regs->BSRR = TFT_WR_MASK; }
-	#define CD_COMMAND   { GPIOC->regs->BRR  = TFT_RS_MASK; }
-	#define CD_DATA      { GPIOC->regs->BSRR = TFT_RS_MASK; }
-	#define CS_ACTIVE    { GPIOC->regs->BRR  = TFT_CS_MASK; }
-	#define CS_IDLE      { GPIOC->regs->BSRR = TFT_CS_MASK; }
+	#define RD_ACTIVE    { GPIOB->BRR  = TFT_RD_MASK; }
+	#define RD_IDLE      { GPIOB->BSRR = TFT_RD_MASK; }
+	#define WR_ACTIVE    { GPIOC->BRR  = TFT_WR_MASK; }
+	#define WR_IDLE      { GPIOC->BSRR = TFT_WR_MASK; }
+	#define CD_COMMAND   { GPIOC->BRR  = TFT_RS_MASK; }
+	#define CD_DATA      { GPIOC->BSRR = TFT_RS_MASK; }
+	#define CS_ACTIVE    { GPIOC->BRR  = TFT_CS_MASK; }
+	#define CS_IDLE      { GPIOC->BSRR = TFT_CS_MASK; }
 #endif
 
 #define WR_STROBE { WR_ACTIVE; WR_IDLE; }
 
 //Set pins to the 8 bit number
-#define write8(c) { TFT_DATA->regs->BSRR = (((c^0xFF)<<16) | (c))<<TFT_DATA_NIBBLE; WR_STROBE; }
+#define write8(c) { TFT_DATA->BSRR = (((c^0xFF)<<16) | (c))<<TFT_DATA_NIBBLE; WR_STROBE; }
 
 extern uint8_t read8_(void);
 #define read8(x) ( x = read8_() )
@@ -86,18 +86,18 @@ extern uint8_t read8_(void);
 // not required to mask and assign, because all pins of bus are set together
 //each pin is configured by four bits, and 0b0011 or 0x3 means output mode (same as pinmode())
 #if TFT_DATA_NIBBLE>0
-	#define setWriteDir() ( TFT_DATA->regs->CRH = 0x33333333 )	// set the lower 8 bits as output
+	#define setWriteDir() ( TFT_DATA->CRH = 0x33333333 )	// set the lower 8 bits as output
 #else
-	#define setWriteDir() ( TFT_DATA->regs->CRL = 0x33333333 )	// set the lower 8 bits as output
+	#define setWriteDir() ( TFT_DATA->CRL = 0x33333333 )	// set the lower 8 bits as output
 #endif
 
 // set the pins to input mode
 // not required to mask and assign, because all pins of bus are set together
 // 8 in hex is 0b1000, which means input, same as pinmode()
 #if TFT_DATA_NIBBLE>0
-  #define setReadDir() ( TFT_DATA->regs->CRH = 0x88888888 )	// set the upper 8 bits as input
+  #define setReadDir() ( TFT_DATA->CRH = 0x88888888 )	// set the upper 8 bits as input
 #else
-  #define setReadDir() ( TFT_DATA->regs->CRL = 0x88888888 )	// set the lower 8 bits as input
+  #define setReadDir() ( TFT_DATA->CRL = 0x88888888 )	// set the lower 8 bits as input
 #endif
 
 

@@ -1,17 +1,20 @@
+
+#include "control.h"
+
 // zconfig: since we are referencing variables defined in other files 
 
 #define PREAMBLE_VALUE	2859
 
 
 // ------------------------
-void loadConfig(boolean reset)	{
+void loadConfig(bool reset)	{
 // ------------------------
 	DBG_PRINTLN("Loading stored config...");
 
-	if(EEPROM.init() != EEPROM_OK)	{
+	//FIXME if(EEPROM.init() != EEPROM_OK)	{
 		loadDefaults();
-		return;
-	}
+		//return;
+	//}
 	
 	// read preamble
 	if(reset || (EEPROM.read(PARAM_PREAMBLE) != PREAMBLE_VALUE))	{
@@ -121,7 +124,7 @@ void loadDefaults()	{
 void formatSaveConfig()	{
 // ------------------------
 	DBG_PRINTLN("Formatting EEPROM");
-	EEPROM.format();
+	//FIXME EEPROM.format();
 	DBG_PRINTLN("Saving all config params....");
 	
 	saveParameter(PARAM_PREAMBLE, PREAMBLE_VALUE);
@@ -151,10 +154,11 @@ void formatSaveConfig()	{
 // ------------------------
 void saveParameter(uint16_t param, uint16_t data)	{
 // ------------------------
+ EEPROM.write(param, data);
+ /*
 	uint16 status = EEPROM.write(param, data);
 	if(status != EEPROM_OK)	{
 		DBG_PRINT("Unable to save param in EEPROM, code: ");DBG_PRINTLN(status);
 	}
+ */
 }
-
-

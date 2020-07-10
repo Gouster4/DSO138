@@ -1,6 +1,14 @@
 
-enum { TRIGGER_AUTO, TRIGGER_NORM, TRIGGER_SINGLE };
+#include "control.h"
+#include "variables.h"
+#include "io.h"
+#include "display.h"
+#include "capture.h"
+
 uint8_t triggerType;
+
+
+void captureDisplayCycle(boolean wTimeOut);
 
 
 // ------------------------
@@ -15,7 +23,7 @@ void setTriggerType(uint8_t tType)	{
 
 
 // ------------------------
-void controlLoop()	{
+void controlLoop(void)	{
 // ------------------------
 	// start by reading the state of analog system
 	readInpSwitches();

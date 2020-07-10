@@ -36,7 +36,7 @@ Adafruit_TFTLCD_8bit_STM32 :: Adafruit_TFTLCD_8bit_STM32(void)
   //Set command lines as output
   //Note: CRH and CRL are both 32 bits wide
   //Each pin is represented by 4 bits 0x3 (hex) sets that pin to O/P
-  // TFT_CNTRL->regs->CRL = (TFT_CNTRL->regs->CRL & 0xFFFF0000) | 0x00003333;
+  // TFT_CNTRL->CRL = (TFT_CNTRL->CRL & 0xFFFF0000) | 0x00003333;
   
 	pinMode(TFT_RD, OUTPUT);
 	pinMode(TFT_WR, OUTPUT);
@@ -426,7 +426,7 @@ uint8_t read8_(void)
 {
   RD_ACTIVE;
   delayMicroseconds(10);
-  uint8_t temp = ( (TFT_DATA->regs->IDR>>TFT_DATA_NIBBLE) & 0x00FF);
+  uint8_t temp = ( (TFT_DATA->IDR>>TFT_DATA_NIBBLE) & 0x00FF);
   delayMicroseconds(1);
   RD_IDLE;
   delayMicroseconds(1);

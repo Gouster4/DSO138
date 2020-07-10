@@ -1,3 +1,6 @@
+
+#include"hal.h" 
+
 int16_t trigLevel = 0;
 
 
@@ -67,22 +70,26 @@ void setADC()	{
 	adc_set_sample_rate(ADC2, ADC_SMPR_1_5);
 
 	adc_set_reg_seqlen(ADC1, 1);
-	ADC1->regs->SQR3 = pinMapADCin1;
+	//ADC1->regs->SQR3 = pinMapADCin1;
+  adc_set_channel(ADC1,  pinMapADCin1 );
 	// set ADC1 continuous mode
-	ADC1->regs->CR2 |= ADC_CR2_CONT; 	
+	//ADC1->regs->CR2 |= ADC_CR2_CONT; 	
 	// set ADC2 in regular simultaneous mode
-	ADC1->regs->CR1 |= 0x60000; 		
-	ADC1->regs->CR2 |= ADC_CR2_SWSTART;
-
+	//ADC1->regs->CR1 |= 0x60000; 		
+	//ADC1->regs->CR2 |= ADC_CR2_SWSTART;
+  adc_set_mode(ADC1, 0x60000 , ADC_CR2_SWSTART | ADC_CR2_CONT);
+    
 	// set ADC2 continuous mode
-	ADC2->regs->CR2 |= ADC_CR2_CONT; 	
-	ADC2->regs->SQR3 = pinMapADCin2;
+	//ADC2->regs->CR2 |= ADC_CR2_CONT; 	
+  adc_set_mode(ADC2, 0 , ADC_CR2_CONT);
+	//ADC2->regs->SQR3 = pinMapADCin2;
+  adc_set_channel(ADC2,  pinMapADCin2 );
 }
 
 
 
 // ------------------------
-void blinkLED()	{
+void blinkLED(void)	{
 // ------------------------
 	LED_ON;
 	delay(10);
@@ -124,27 +131,33 @@ void setTriggerLevel(int16_t tLvl)	{
 
 
 // ------------------------
-void readInpSwitches()	{
+void readInpSwitches(void)	{
 // ------------------------
 	static uint8_t couplingOld, rangeOld;
 
 	uint16_t cpl, pos1, pos2;
-	adc_reg_map *ADC1regs = ADC1->regs;
+	//adc_reg_map *ADC1regs = ADC1->regs;
 
 	// ADC1 and ADC2 are free running at max speed
 	
 	// change to switch 1 
-	ADC1regs->SQR3 = PIN_MAP[VSENSSEL2].adc_channel;
+	//ADC1regs->SQR3 = PIN_MAP[VSENSSEL2].adc_channel;
+  adc_set_channel(ADC1,PIN_MAP[VSENSSEL2].adc_channel );
 	delayMicroseconds(100);
-	pos2 = (uint16_t) (ADC1regs->DR & ADC_DR_DATA);
+	//pos2 = (uint16_t) (ADC1regs->DR & ADC_DR_DATA);
+	pos2 = adc_read(ADC1);
+  
+	//ADC1regs->SQR3 = PIN_MAP[VSENSSEL1].adc_channel;
+  adc_set_channel(ADC1, PIN_MAP[VSENSSEL1].adc_channel );
+	delayMicroseconds(100);
+	//pos1 = (uint16_t) (ADC1regs->DR & ADC_DR_DATA);
+  pos1 = adc_read(ADC1);
 	
-	ADC1regs->SQR3 = PIN_MAP[VSENSSEL1].adc_channel;
+	//ADC1regs->SQR3 = PIN_MAP[CPLSEL].adc_channel;
+  adc_set_channel(ADC1, PIN_MAP[CPLSEL].adc_channel );
 	delayMicroseconds(100);
-	pos1 = (uint16_t) (ADC1regs->DR & ADC_DR_DATA);
-	
-	ADC1regs->SQR3 = PIN_MAP[CPLSEL].adc_channel;
-	delayMicroseconds(100);
-	cpl = (uint16_t) (ADC1regs->DR & ADC_DR_DATA);
+	//cpl = (uint16_t) (ADC1regs->DR & ADC_DR_DATA);
+  cpl = adc_read(ADC1);
 	
 	if(cpl < 400)
 		couplingPos = CPL_GND;
@@ -182,7 +195,7 @@ void readInpSwitches()	{
 	// ***
 	
 	// switch ADC1 back to capture channel
-	ADC1regs->SQR3 = PIN_MAP[AN_CH1].adc_channel;
+	//ADC1regs->SQR3 = PIN_MAP[AN_CH1].adc_channel;
+  adc_set_channel(ADC1,  PIN_MAP[AN_CH1].adc_channel );
 	delayMicroseconds(100);
 }
-

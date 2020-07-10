@@ -17,7 +17,7 @@ long lastBtnPress = 0;
 // ------------------------
 void btn4ISR()	{
 // ------------------------
-	static boolean pressed = false;
+	static bool pressed = false;
 	static long pressedTime = 0;
 
 	// btn pressed or released?
@@ -413,6 +413,3 @@ void changeXCursor(int16_t xPos)	{
 	saveParameter(PARAM_XCURSOR, xCursor);
 	repaintLabels();
 }
-
-
-
