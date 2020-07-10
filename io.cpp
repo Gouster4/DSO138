@@ -1,11 +1,19 @@
 
-#include"hal.h" 
+#include "hal.h" 
+#include "variables.h"
+#include "encoder.h"
+#include "interface.h"
+#include "capture.h"
+#include "display.h"
 
 int16_t trigLevel = 0;
 
+void setADC(void);
+void blinkLED(void);
+void initScanTimeout(void);
 
 // ------------------------
-void initIO()	{
+void initIO(void)	{
 // ------------------------
 	// set pin I/O direction
 	pinMode(BOARD_LED, OUTPUT);
@@ -60,7 +68,7 @@ void initIO()	{
 
 
 // ------------------------
-void setADC()	{
+void setADC(void)	{
 // ------------------------
 	int pinMapADCin1 = PIN_MAP[AN_CH1].adc_channel;
 	int pinMapADCin2 = PIN_MAP[AN_CH2].adc_channel;
@@ -99,7 +107,7 @@ void blinkLED(void)	{
 
 
 // ------------------------
-void initScanTimeout()	{
+void initScanTimeout(void)	{
 // ------------------------
 	Timer2.setChannel1Mode(TIMER_OUTPUTCOMPARE);
 	Timer2.pause();
@@ -110,7 +118,7 @@ void initScanTimeout()	{
 
 
 // ------------------------
-int16_t getTriggerLevel()	{
+int16_t getTriggerLevel(void)	{
 // ------------------------
 	return trigLevel;
 }

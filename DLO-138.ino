@@ -4,6 +4,7 @@
 #include "global.h"
 #include "variables.h"
 #include "control.h"
+#include "io.h"
 
 #define FIRMWARE_VERSION	"1.0"
 

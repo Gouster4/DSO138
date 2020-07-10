@@ -28,7 +28,7 @@ int getEncoderSteps()	{
 
 // ------------------------
 // ISR
-void readEncoderISR()	{
+void readEncoderISR(void)	{
 // ------------------------
 	static byte lastPos = 0b00;
 
@@ -72,7 +72,7 @@ long lastABPress = 0;
 
 // ------------------------
 // ISR
-void readASwitchISR()	{
+void readASwitchISR(void)	{
 // ------------------------
 	if(millis() - lastABPress < BTN_DEBOUNCE_TIME)
 		return;
@@ -85,7 +85,7 @@ void readASwitchISR()	{
 
 // ------------------------
 // ISR
-void readBSwitchISR()	{
+void readBSwitchISR(void)	{
 // ------------------------
 	if(millis() - lastABPress < BTN_DEBOUNCE_TIME)
 		return;
@@ -93,5 +93,3 @@ void readBSwitchISR()	{
 	
 	encoderChanged(1);
 }
-
-

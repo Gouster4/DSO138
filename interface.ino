@@ -1,4 +1,5 @@
 
+#include "io.h"
 
 // ------------------------
 const char* getTimebaseLabel()	{
@@ -15,7 +16,7 @@ long lastBtnPress = 0;
 
 
 // ------------------------
-void btn4ISR()	{
+void btn4ISR(void)	{
 // ------------------------
 	static bool pressed = false;
 	static long pressedTime = 0;
@@ -53,7 +54,7 @@ void btn4ISR()	{
 
 
 // ------------------------
-void readESwitchISR()	{
+void readESwitchISR(void)	{
 // ------------------------
 	// debounce
 	if(millis() - lastBtnPress < BTN_DEBOUNCE_TIME)

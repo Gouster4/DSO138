@@ -1,6 +1,6 @@
 
 #include "control.h"
-
+#include "io.h"
 // zconfig: since we are referencing variables defined in other files 
 
 #define PREAMBLE_VALUE	2859
@@ -142,7 +142,7 @@ void formatSaveConfig()	{
 	saveParameter(PARAM_WAVES + 2, waves[2]);
 	saveParameter(PARAM_WAVES + 3, waves[3]);
 	
-	saveParameter(PARAM_TLEVEL, trigLevel);
+	saveParameter(PARAM_TLEVEL, getTriggerLevel());
  	saveParameter(PARAM_STATS, printStats);
 	
 	saveParameter(PARAM_ZERO1, zeroVoltageA1);
