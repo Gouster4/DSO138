@@ -1,3 +1,7 @@
+#MicroDSO
+
+port of DLO-138 to compile in Arduino 1.8.10 with new STM32 support. Converted to C++ to be portable.
+
 # DLO-138
 An open source firmware for DSO-138 Oscilloscope. 
 ![Photo](https://github.com/ardyesp/DLO-138/blob/master/pics/pic4.png)
