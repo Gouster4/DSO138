@@ -1,3 +1,7 @@
+#include "hal.h"
+#include "global.h"
+#include "interface.h"
+
 /* Rotary encoder methods
 	CW        CCW
 	01        00
