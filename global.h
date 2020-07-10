@@ -1,3 +1,6 @@
+
+#define FIRMWARE_VERSION  "1.0"
+
 // comment out following line to use DSO push buttons instead of encoder
 #define USE_ENCODER
 

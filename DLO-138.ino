@@ -1,12 +1,9 @@
 #include <EEPROM.h>
-#include <Adafruit_GFX.h>
-#include "src/TFTLib/Adafruit_TFTLCD_8bit_STM32.h"
 #include "global.h"
 #include "variables.h"
 #include "control.h"
 #include "io.h"
-
-#define FIRMWARE_VERSION	"1.0"
+#include "display.h"
 
 // ------------------------
 void setup()	{

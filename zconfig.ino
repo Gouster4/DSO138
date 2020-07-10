@@ -2,6 +2,7 @@
 #include "control.h"
 #include "io.h"
 #include "capture.h"
+#include "interface.h"
 
 // zconfig: since we are referencing variables defined in other files 
 

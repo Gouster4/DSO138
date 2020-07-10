@@ -31,5 +31,6 @@ void drawWaves(void);
 void drawLabels(void);
 void focusNextLabel(void);
 void calculateStats(void);
+void initDisplay(void);
 
 #endif

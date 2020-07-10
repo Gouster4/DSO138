@@ -1,7 +1,13 @@
-
+#include "hal.h"
+#include "variables.h"
 #include "interface.h"
 #include "display.h"
 #include "capture.h" 
+#include "control.h"
+#include "io.h"
+
+#include <Adafruit_GFX.h>
+#include "src/TFTLib/Adafruit_TFTLCD_8bit_STM32.h"
 
 Adafruit_TFTLCD_8bit_STM32 tft;
 
@@ -31,6 +37,13 @@ bool paintLabels = false;
 // labels around the grid
 uint8_t currentFocus = L_timebase;
 
+void banner(void);
+void clearStats(void);
+void drawGrid(void);
+void clearNDrawSignals(void);
+void drawStats(void);
+inline void plotLineSegment(int16_t transposedPt1, int16_t transposedPt2,  int index, uint16_t color);
+void drawVoltage(float volt, int y, bool mvRange);
 
 // ------------------------
 void focusNextLabel(void)	{
@@ -65,7 +78,7 @@ void repaintLabels(void)	{
 
 
 // ------------------------
-void initDisplay()	{
+void initDisplay(void)	{
 // ------------------------
 	tft.reset();
 	tft.begin(0x9341);
@@ -159,7 +172,7 @@ void indicateCapturingDone(void)	{
 
 // 0, 1 Analog channels. 2, 3 digital channels
 // ------------------------
-void clearNDrawSignals()	{
+void clearNDrawSignals(void)	{
 // ------------------------
 	static bool wavesOld[4] = {false,};
 	static int16_t yCursorsOld[4];
@@ -332,7 +345,7 @@ void drawVCursor(int channel, uint16_t color, bool highlight)	{
 
 
 // ------------------------
-void drawGrid()	{
+void drawGrid(void)	{
 // ------------------------
 	uint8_t hPacing = GRID_WIDTH / 12;
 	uint8_t vPacing = GRID_HEIGHT / 8;
@@ -511,7 +524,7 @@ void drawLabels(void)	{
 // #define DRAW_TIMEBASE
 
 // ------------------------
-void drawStats()	{
+void drawStats(void)	{
 // ------------------------
 	static long lastCalcTime = 0;
 	bool clearStats = false;
@@ -717,7 +730,7 @@ void drawVoltage(float volt, int y, bool mvRange)	{
 
 
 // ------------------------
-void clearStats()	{
+void clearStats(void)	{
 // ------------------------
 	tft.fillRect(hOffset, vOffset, GRID_WIDTH, 80, ILI9341_BLACK);
 }
@@ -725,7 +738,7 @@ void clearStats()	{
 
 
 // ------------------------
-void banner()	{
+void banner(void)	{
 // ------------------------
 	tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
 	tft.setTextSize(2);
