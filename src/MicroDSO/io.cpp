@@ -19,8 +19,10 @@ void initIO(void)	{
 	pinMode(BOARD_LED, OUTPUT);
 	pinMode(AN_CH1, INPUT_ANALOG);
 	pinMode(AN_CH2, INPUT_ANALOG);
+#ifndef HWDEBUG
 	pinMode(DG_CH1, INPUT_PULLDOWN);
 	pinMode(DG_CH2, INPUT_PULLDOWN);
+#endif
 	pinMode(TRIGGER_IN, INPUT_PULLUP);
 	
 	// calibrate the ADC channels at startup

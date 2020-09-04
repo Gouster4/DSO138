@@ -6,7 +6,7 @@
 
 #define TIMER_OUTPUTCOMPARE TIMER_OUTPUT_COMPARE
 
-#define PWM 0
+#define PWM 1
 #define ADC_SMPR_1_5 0x01
 
 typedef unsigned long long uint32;
@@ -15,8 +15,8 @@ typedef unsigned char uint8;
 
 class timer
 {
+public:
   HardwareTimer *Tim;
-  public:  
   timer(TIM_TypeDef *Instance);
   ~timer();
   void setChannel1Mode(TimerModes_t flags);

@@ -172,6 +172,7 @@ void startSampling(int16_t lDelay)	{
 	
 	prevTime = micros();
 	
+
 	if(lDelay < 0)	{
 
 		asm volatile(
