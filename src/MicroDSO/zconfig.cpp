@@ -7,7 +7,9 @@
 #include "zconfig.h"
 #include "display.h"
 
-#include <EEPROM.h>
+#include "src/EEPROM/eeprom.h"
+
+EEPROM_ EEPROM;
 
 // zconfig: since we are referencing variables defined in other files 
 
@@ -22,10 +24,10 @@ void loadConfig(bool reset)	{
 // ------------------------
 	DBG_PRINTLN("Loading stored config...");
 
-	//FIXME if(EEPROM.init() != EEPROM_OK)	{
+	if(EEPROM.init() != EEPROM_OK)	{
 		loadDefaults();
-		//return;
-	//}
+		return;
+	}
 	
 	// read preamble
 	if(reset || (EEPROM.read(PARAM_PREAMBLE) != PREAMBLE_VALUE))	{
@@ -135,7 +137,7 @@ void loadDefaults(void)	{
 void formatSaveConfig(void)	{
 // ------------------------
 	DBG_PRINTLN("Formatting EEPROM");
-	//FIXME EEPROM.format();
+	EEPROM.format();
 	DBG_PRINTLN("Saving all config params....");
 	
 	saveParameter(PARAM_PREAMBLE, PREAMBLE_VALUE);
@@ -165,11 +167,9 @@ void formatSaveConfig(void)	{
 // ------------------------
 void saveParameter(uint16_t param, uint16_t data)	{
 // ------------------------
- EEPROM.write(param, data);
- /*
+
 	uint16 status = EEPROM.write(param, data);
 	if(status != EEPROM_OK)	{
 		DBG_PRINT("Unable to save param in EEPROM, code: ");DBG_PRINTLN(status);
 	}
- */
 }
