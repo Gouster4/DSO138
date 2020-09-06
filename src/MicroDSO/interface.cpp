@@ -385,11 +385,11 @@ void decrementTimeBase(void)	{
 
 
 // ------------------------
-void setTimeBase(uint8_t timeBase)	{
+void setTimeBase(uint8_t timeBase, bool save) {
 // ------------------------
 	currentTimeBase = timeBase;
 	setSamplingRate(timeBase);
-	saveParameter(PARAM_TIMEBASE, currentTimeBase);
+	if(save) saveParameter(PARAM_TIMEBASE, currentTimeBase);
 	// request repainting of screen labels
 	repaintLabels();
 }

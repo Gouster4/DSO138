@@ -16,7 +16,8 @@
  #include "WProgram.h"
 #endif
 
-#include <Adafruit_GFX.h>
+//#include <Adafruit_GFX.h>
+#include "../Adafruit_GFX/Adafruit_GFX.h"
 
 /*****************************************************************************/
 #define TFTWIDTH   320

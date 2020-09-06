@@ -31,22 +31,59 @@ bool 	EE_Writes(uint16_t VirtualAddress,uint16_t HowMuchToWrite,uint32_t* Data);
 
 
 #define EEPROM_OK 1
-#define EESIZE 18
+#define EESIZE 20   //size in word
 class EEPROM_
 {
 uint16_t eedata[EESIZE];
+uint16_t eeaddr;  //in bytes
 public:
 bool init(void){
+	bool ret;
 	__HAL_FLASH_PREFETCH_BUFFER_ENABLE();
 	__HAL_FLASH_SET_LATENCY(FLASH_LATENCY_2);
-	return EE_Reads(0, EESIZE/2 ,(uint32_t*) &eedata);
+
+	eeaddr=0;
+
+	do{
+	ret = EE_Reads(eeaddr, EESIZE/2 ,(uint32_t*) &eedata);
+	eeaddr+=EESIZE*2;
+	if(eeaddr > 1024)ret=1;
+	}while((eedata[0] != 0xFFFF)&&(ret)&&(eeaddr < 1024));
+	eeaddr-=EESIZE*2;
+
+	if(ret)
+	{
+		if(eeaddr >0)
+		{
+		ret = EE_Reads((eeaddr-(EESIZE*2)), EESIZE/2 ,(uint32_t*) &eedata);
+		}
+    }
+	else
+	{
+		 format();
+	}
+
+	return ret;
 };
-uint16_t read(uint16_t addr){return eedata[addr];};
-bool format(void){return EE_Format();};
+uint16_t read(uint16_t addr)
+  {
+	return eedata[addr];
+  };
+bool format(void)
+  {
+	eeaddr=0;
+	return EE_Format();
+  };
 bool write(uint16_t addr, uint16_t data)
   {
 	 	 eedata[addr]=data;
-		 return EE_Writes(0,EESIZE/2 ,(uint32_t*) &eedata);
+	 	 if((eeaddr+(EESIZE*2)) >= 1024)
+	     {
+	 		 format();
+	 	 }
+		 bool ret = EE_Writes(eeaddr,EESIZE/2 ,(uint32_t*) &eedata);
+		 eeaddr+=EESIZE*2;
+		 return ret;
   }
 };
 

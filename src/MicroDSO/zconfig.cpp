@@ -26,6 +26,7 @@ void loadConfig(bool reset)	{
 
 	if(EEPROM.init() != EEPROM_OK)	{
 		loadDefaults();
+		formatSaveConfig();
 		return;
 	}
 	
@@ -40,7 +41,7 @@ void loadConfig(bool reset)	{
 	uint16_t data;
 	
 	data = EEPROM.read(PARAM_TIMEBASE);
-	setTimeBase(data);
+	setTimeBase(data, false);
 	
 	// trigger type is not persisted
 	setTriggerType(TRIGGER_AUTO);
