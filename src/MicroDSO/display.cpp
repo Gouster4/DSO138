@@ -743,8 +743,8 @@ void banner(void)	{
 	tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
 	tft.setTextSize(2);
 	tft.setCursor(110, 30);
-	tft.print("DLO-138");
-	tft.drawRect(100, 25, 100, 25, ILI9341_WHITE);
+	tft.print("MicroDSO");
+	tft.drawRect(100, 25, 112, 25, ILI9341_WHITE);
 
 	tft.setTextSize(1);
 	tft.setCursor(30, 70);
@@ -753,7 +753,7 @@ void banner(void)	{
 	tft.setCursor(30, 95);
 	tft.print("Usage: ");
 	tft.setTextColor(ILI9341_YELLOW, ILI9341_BLACK);
-	tft.print("https://github.com/ardyesp/DLO-138");
+	tft.print("https://github.com/lcgamboa/MicroDSO");
 
 	tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
 	tft.setCursor(30, 120);
