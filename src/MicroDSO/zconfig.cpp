@@ -16,8 +16,6 @@ EEPROM_ EEPROM;
 
 void formatSaveConfig(void);
 
-#define PREAMBLE_VALUE	2859
-
 
 // ------------------------
 void loadConfig(bool reset)	{
@@ -141,35 +139,35 @@ void formatSaveConfig(void)	{
 	EEPROM.format();
 	DBG_PRINTLN("Saving all config params....");
 	
-	saveParameter(PARAM_PREAMBLE, PREAMBLE_VALUE);
+	saveParameter(PARAM_PREAMBLE, PREAMBLE_VALUE, false);
 	
-	saveParameter(PARAM_TIMEBASE, currentTimeBase);
-	saveParameter(PARAM_TRIGDIR, triggerRising);
-	saveParameter(PARAM_XCURSOR, xCursor);
-	saveParameter(PARAM_YCURSOR, yCursors[0]);
-	saveParameter(PARAM_YCURSOR + 1, yCursors[1]);
-	saveParameter(PARAM_YCURSOR + 2, yCursors[2]);
-	saveParameter(PARAM_YCURSOR + 3, yCursors[3]);
+	saveParameter(PARAM_TIMEBASE, currentTimeBase, false);
+	saveParameter(PARAM_TRIGDIR, triggerRising, false);
+	saveParameter(PARAM_XCURSOR, xCursor, false);
+	saveParameter(PARAM_YCURSOR, yCursors[0], false);
+	saveParameter(PARAM_YCURSOR + 1, yCursors[1], false);
+	saveParameter(PARAM_YCURSOR + 2, yCursors[2], false);
+	saveParameter(PARAM_YCURSOR + 3, yCursors[3], false);
 	
-	saveParameter(PARAM_WAVES, waves[0]);
-	saveParameter(PARAM_WAVES + 1, waves[1]);
-	saveParameter(PARAM_WAVES + 2, waves[2]);
-	saveParameter(PARAM_WAVES + 3, waves[3]);
+	saveParameter(PARAM_WAVES, waves[0], false);
+	saveParameter(PARAM_WAVES + 1, waves[1], false);
+	saveParameter(PARAM_WAVES + 2, waves[2], false);
+	saveParameter(PARAM_WAVES + 3, waves[3], false);
 	
-	saveParameter(PARAM_TLEVEL, getTriggerLevel());
- 	saveParameter(PARAM_STATS, printStats);
+	saveParameter(PARAM_TLEVEL, getTriggerLevel(), false);
+ 	saveParameter(PARAM_STATS, printStats, false);
 	
-	saveParameter(PARAM_ZERO1, zeroVoltageA1);
-	saveParameter(PARAM_ZERO2, zeroVoltageA2);
+	saveParameter(PARAM_ZERO1, zeroVoltageA1, false);
+	saveParameter(PARAM_ZERO2, zeroVoltageA2, true);
 }
 
 
 
 // ------------------------
-void saveParameter(uint16_t param, uint16_t data)	{
+void saveParameter(uint16_t param, uint16_t data, bool flash_write)	{
 // ------------------------
 
-	uint16 status = EEPROM.write(param, data);
+	uint16 status = EEPROM.write(param, data, flash_write);
 	if(status != EEPROM_OK)	{
 		DBG_PRINT("Unable to save param in EEPROM, code: ");DBG_PRINTLN(status);
 	}

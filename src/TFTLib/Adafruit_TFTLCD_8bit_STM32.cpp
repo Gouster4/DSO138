@@ -56,7 +56,7 @@ Adafruit_TFTLCD_8bit_STM32 :: Adafruit_TFTLCD_8bit_STM32(void)
 /*****************************************************************************/
 void Adafruit_TFTLCD_8bit_STM32::begin(uint16_t id)
 {
-  uint8_t i = 0;
+  //uint8_t i = 0;
 
   reset();
 
@@ -326,7 +326,7 @@ void Adafruit_TFTLCD_8bit_STM32::drawPixel(int16_t x, int16_t y, uint16_t color)
 // previously been set to define the bounds.  Max 255 pixels at
 // a time (BMP examples read in small chunks due to limited RAM).
 /*****************************************************************************/
-void Adafruit_TFTLCD_8bit_STM32::pushColors(uint16_t *data, uint8_t len, boolean first)
+void Adafruit_TFTLCD_8bit_STM32::pushColors(uint16_t *data, uint8_t len, bool first)
 {
   uint16_t color;
   uint8_t  hi, lo;
@@ -377,7 +377,7 @@ void Adafruit_TFTLCD_8bit_STM32::setRotation(uint8_t x)
 
   } else if (driver == ID_9341) {
    // MEME, HX8357D uses same registers as 9341 but different values
-   uint16_t t;
+   uint16_t t=0;
 
    switch (rotation) {
    case 2:

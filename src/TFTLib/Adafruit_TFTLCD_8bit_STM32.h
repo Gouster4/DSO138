@@ -17,7 +17,7 @@
 #endif
 
 //#include <Adafruit_GFX.h>
-#include "../Adafruit_GFX/Adafruit_GFX.h"
+#include "../Adafruit_GFX_/Adafruit_GFX_.h"
 
 /*****************************************************************************/
 #define TFTWIDTH   320
@@ -155,7 +155,7 @@ class Adafruit_TFTLCD_8bit_STM32 : public Adafruit_GFX {
   void     setRotation(uint8_t x);
        // These methods are public in order for BMP examples to work:
   void     setAddrWindow(int x1, int y1, int x2, int y2);
-  void     pushColors(uint16_t *data, uint8_t len, boolean first);
+  void     pushColors(uint16_t *data, uint8_t len, bool first);
 
   uint16_t color565(uint8_t r, uint8_t g, uint8_t b),
            readPixel(int16_t x, int16_t y),

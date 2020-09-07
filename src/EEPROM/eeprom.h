@@ -74,16 +74,20 @@ bool format(void)
 	eeaddr=0;
 	return EE_Format();
   };
-bool write(uint16_t addr, uint16_t data)
+bool write(uint16_t addr, uint16_t data, bool flash_write= false)
   {
 	 	 eedata[addr]=data;
-	 	 if((eeaddr+(EESIZE*2)) >= 1024)
-	     {
+	 	 if(flash_write)
+	 	 {
+	 	   if((eeaddr+(EESIZE*2)) >= 1024)
+	       {
 	 		 format();
+	 	   }
+		   bool ret = EE_Writes(eeaddr,EESIZE/2 ,(uint32_t*) &eedata);
+		   eeaddr+=EESIZE*2;
+		   return ret;
 	 	 }
-		 bool ret = EE_Writes(eeaddr,EESIZE/2 ,(uint32_t*) &eedata);
-		 eeaddr+=EESIZE*2;
-		 return ret;
+	 	 return true;
   }
 };
 

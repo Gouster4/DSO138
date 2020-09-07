@@ -4,6 +4,12 @@ port of DLO-138 to compile in Arduino 1.8.10 with new STM32 support. Converted t
 
 Use the [Sloeber plugin](https://eclipse.baeyens.it/) in eclipse to debug the code. More info in [stm32duino how to debug](https://github.com/stm32duino/wiki/wiki/How-to-debug)
 
+To avoid unnecessary wear on the flash memory used as an emulated eeprom, the parameters are only saved now by the user's action.
+
+In the previous normal mode whenever the + or - keys are pressed, the settings were saved. The settings are 20 bytes in size, the flash page 1024, so the configuration can be saved 51 times before the page can be erased. As each page can be erased 10000, we have a total of 510000 presses of the + and - keys before the flash loses its useful life.
+Considering 100 clicks per use (probably more if the encoder is used), the flash memory of the configuration should last 5100 uses. Saving only when the user wishes, there is no concern with the duration of the flash. In the newer models DSO138 mini and DSO150 there is an external EEPROM memory to avoid this problem.
+
+
 # DLO-138
 An open source firmware for DSO-138 Oscilloscope. 
 ![Photo](https://github.com/ardyesp/DLO-138/blob/master/pics/pic4.png)
@@ -37,6 +43,7 @@ Following changes can be applied selectively, to get maximum functionality from 
 	Long press OK button:
 	
 		Focus				Action
+		Trigger Type		Save configuration to EEPROM (FLASH emulated)
 		Trigger Level		Zero the trigger level to Analog channel 1
 		Wave X scrollbar	Center waveform on screen (at trigger point)
 		Wave Y cursor		Zero the cursor. If Analog CH1 coupling is GND, waveform reference base is set 

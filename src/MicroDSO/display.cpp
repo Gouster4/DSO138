@@ -6,7 +6,8 @@
 #include "MicroDSO.h"
 #include "io.h"
 
-#include <Adafruit_GFX.h>
+//#include <Adafruit_GFX.h>
+#include "../Adafruit_GFX_/Adafruit_GFX_.h"
 #include "src/TFTLib/Adafruit_TFTLCD_8bit_STM32.h"
 
 Adafruit_TFTLCD_8bit_STM32 tft;

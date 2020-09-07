@@ -132,6 +132,10 @@ void resetParam(void)	{
 		case L_vPos4:
 			changeYCursor(3, -GRID_HEIGHT/2 - 1);
 			break;
+		case L_triggerType:
+			saveParameter(PARAM_PREAMBLE, PREAMBLE_VALUE, true); //salve parameters to flash
+			clearWaves();
+			break;
 		default:
 			// toggle stats printing
 			printStats = !printStats;
