@@ -10,6 +10,10 @@ In the previous normal mode whenever the + or - keys are pressed, the settings w
 Considering 100 clicks per use (probably more if the encoder is used), the flash memory of the configuration should last 5100 uses. Saving only when the user wishes, there is no concern with the duration of the flash. In the newer models DSO138 mini and DSO150 there is an external EEPROM memory to avoid this problem.
 
 
+[Online demonstration](https://lcgamboa.github.io/MicroDSO/MicroDSO.html)
+
+![Photo](https://github.com/lcgamboa/MicroDSO/blob/master/pics/demojs.png)
+
 # DLO-138
 An open source firmware for DSO-138 Oscilloscope. 
 ![Photo](https://github.com/ardyesp/DLO-138/blob/master/pics/pic4.png)
