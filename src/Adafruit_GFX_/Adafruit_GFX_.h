@@ -1,12 +1,17 @@
 #ifndef _ADAFRUIT_GFX_H
 #define _ADAFRUIT_GFX_H
 
+#ifdef ARDUINO
 #if ARDUINO >= 100
 #include "Arduino.h"
 #include "Print.h"
 #else
 #include "WProgram.h"
 #endif
+#else
+#include"Wrapper.h"
+#endif
+
 #include "gfxfont.h"
 
 /// A generic graphics superclass that can handle all sorts of drawing. At a
@@ -112,8 +117,10 @@ public:
                      int16_t *y1, uint16_t *w, uint16_t *h);
   void getTextBounds(const __FlashStringHelper *s, int16_t x, int16_t y,
                      int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h);
+#ifdef _USE_STRING_
   void getTextBounds(const String &str, int16_t x, int16_t y, int16_t *x1,
                      int16_t *y1, uint16_t *w, uint16_t *h);
+#endif  
   void setTextSize(uint8_t s);
   void setTextSize(uint8_t sx, uint8_t sy);
   void setFont(const GFXfont *f = NULL);
@@ -178,11 +185,15 @@ public:
   void cp437(bool x = true) { _cp437 = x; }
 
   using Print::write;
+#ifdef ARDUINO 
 #if ARDUINO >= 100
   virtual size_t write(uint8_t);
 #else
   virtual void write(uint8_t);
 #endif
+#else
+  virtual size_t write(uint8_t);
+#endif  
 
   /************************************************************************/
   /*!

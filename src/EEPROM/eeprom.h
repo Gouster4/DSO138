@@ -1,8 +1,14 @@
 #ifndef __EEPROM_H
 #define __EEPROM_H
 
+
+#ifdef ARDUINO
 #include <stdbool.h>
 #include "stm32f1xx_hal.h"
+#else
+#include"Wrapper.h"
+#endif
+
 
 //#define   _EEPROM_F1_LOW_DESTINY
 #define   _EEPROM_F1_MEDIUM_DESTINY

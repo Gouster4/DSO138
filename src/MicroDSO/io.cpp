@@ -81,19 +81,19 @@ void setADC(void)	{
 
 	adc_set_reg_seqlen(ADC1, 1);
 	//ADC1->regs->SQR3 = pinMapADCin1;
-  adc_set_channel(ADC1,  pinMapADCin1 );
+        adc_set_channel(ADC1,  pinMapADCin1 );
 	// set ADC1 continuous mode
 	//ADC1->regs->CR2 |= ADC_CR2_CONT; 	
 	// set ADC2 in regular simultaneous mode
 	//ADC1->regs->CR1 |= 0x60000; 		
 	//ADC1->regs->CR2 |= ADC_CR2_SWSTART;
-  adc_set_mode(ADC1, 0x60000 , ADC_CR2_SWSTART | ADC_CR2_CONT);
+        adc_set_mode(ADC1, 0x60000 , ADC_CR2_SWSTART | ADC_CR2_CONT);
     
 	// set ADC2 continuous mode
 	//ADC2->regs->CR2 |= ADC_CR2_CONT; 	
-  adc_set_mode(ADC2, 0 , ADC_CR2_CONT);
+        adc_set_mode(ADC2, 0 , ADC_CR2_CONT);
 	//ADC2->regs->SQR3 = pinMapADCin2;
-  adc_set_channel(ADC2,  pinMapADCin2 );
+        adc_set_channel(ADC2,  pinMapADCin2 );
 }
 
 

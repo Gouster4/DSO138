@@ -163,8 +163,9 @@ void startSampling(int16_t lDelay)	{
 // ------------------------
 	keepSampling = true;
 	minSamplesAcquired = false;
+#ifdef ARDUINO
 	uint16_t lCtr = 0;
-	
+#endif	
 	// clear old dataset
 	samplingTime = 0;
 	triggered = false;
@@ -172,7 +173,7 @@ void startSampling(int16_t lDelay)	{
 	
 	prevTime = micros();
 	
-
+#ifdef ARDUINO
 	if(lDelay < 0)	{
 
 		asm volatile(
@@ -354,6 +355,9 @@ void startSampling(int16_t lDelay)	{
 		);		
 	
 	}
+#else
+    wrapper_sampling(lDelay);    
+#endif
 	
 }
 

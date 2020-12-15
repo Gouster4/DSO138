@@ -1,0 +1,3 @@
+g++ -c -Wall -O2 `lxrad-config --cxxflags` pMicroDSO.cc 
+g++ -c -Wall -O2 `lxrad-config --cxxflags` MicroDSO1.cc 
+g++ -Wall -O2 `lxrad-config --cxxflags` pMicroDSO.o MicroDSO1.o   -oMicroDSO `lxrad-config --libs`  

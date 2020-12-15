@@ -1464,7 +1464,7 @@ void Adafruit_GFX::getTextBounds(const char *str, int16_t x, int16_t y,
     *h = maxy - miny + 1;
   }
 }
-
+#ifdef _USE_STRING_
 /**************************************************************************/
 /*!
     @brief    Helper to determine size of a string with current font/size. Pass
@@ -1485,7 +1485,7 @@ void Adafruit_GFX::getTextBounds(const String &str, int16_t x, int16_t y,
     getTextBounds(const_cast<char *>(str.c_str()), x, y, x1, y1, w, h);
   }
 }
-
+#endif
 /**************************************************************************/
 /*!
     @brief    Helper to determine size of a PROGMEM string with current

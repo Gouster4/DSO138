@@ -87,7 +87,7 @@ void initDisplay(void)	{
 	tft.fillScreen(ILI9341_BLACK);
 	banner();
 
-	delay(4000);
+	delay(4000); 
 
 	// and paint o-scope
 	clearWaves();
@@ -667,7 +667,7 @@ void calculateStats(void)	{
 	}
 
 	double tPerSample = ((double)samplingTime) / NUM_SAMPLES;
-	float timePerDiv = tPerSample * 25;
+	//float timePerDiv = tPerSample * 25;
 	double avgCycleWidth = sumCW * tPerSample / numCycles;
 	
 	wStats.avgPW = sumPW * tPerSample / numHCycles;

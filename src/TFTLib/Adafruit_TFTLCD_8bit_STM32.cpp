@@ -209,7 +209,7 @@ void Adafruit_TFTLCD_8bit_STM32::drawFastHLine(int16_t x, int16_t y, int16_t len
   setAddrWindow(x, y, x2, y);
   flood(color, length);
   if(driver == ID_932X) setAddrWindow(0, 0, TFTWIDTH - 1, TFTHEIGHT - 1);
-  else                  hx8347g_setLR();
+  else if(driver != ID_9341) hx8347g_setLR();
 }
 
 /*****************************************************************************/
@@ -233,7 +233,7 @@ void Adafruit_TFTLCD_8bit_STM32::drawFastVLine(int16_t x, int16_t y, int16_t len
   setAddrWindow(x, y, x, y2);
   flood(color, length);
   if(driver == ID_932X) setAddrWindow(0, 0, TFTWIDTH - 1, TFTHEIGHT - 1);
-  else                  hx8347g_setLR();
+  else if(driver != ID_9341)  hx8347g_setLR();
 }
 
 /*****************************************************************************/
@@ -265,7 +265,7 @@ void Adafruit_TFTLCD_8bit_STM32::fillRect(int16_t x1, int16_t y1, int16_t w, int
   setAddrWindow(x1, y1, x2, y2);
   flood(fillcolor, (uint32_t)w * (uint32_t)h);
   if(driver == ID_932X) setAddrWindow(0, 0, TFTWIDTH - 1, TFTHEIGHT - 1);
-  else                  hx8347g_setLR();
+  else if(driver != ID_9341)  hx8347g_setLR();
 }
 
 /*****************************************************************************/
@@ -399,7 +399,7 @@ void Adafruit_TFTLCD_8bit_STM32::setRotation(uint8_t x)
 
   } else if (driver == ID_HX8357D) {
     // MEME, HX8357D uses same registers as 9341 but different values
-    uint16_t t;
+    uint16_t t=0;
     
     switch (rotation) {
       case 2:
@@ -433,8 +433,10 @@ uint8_t read8_(void)
   return temp;
 }
 
+#ifdef AURDUINO
 // speed optimization
 static void writeCommand(uint8_t c) __attribute__((always_inline));
+#endif
 /*****************************************************************************/
 static void writeCommand(uint8_t c)
 {
@@ -472,8 +474,8 @@ uint16_t Adafruit_TFTLCD_8bit_STM32::readPixel(int16_t x, int16_t y)
     read8(b);
     setWriteDir(); // Restore LCD data port(s) to WRITE configuration
     CS_IDLE;
-    return (((uint16_t)r & B11111000) << 8) |
-           (((uint16_t)g & B11111100) << 3) |
+    return (((uint16_t)r & 0xF8) << 8) |
+           (((uint16_t)g & 0xFC) << 3) |
            (           b              >> 3);
   } else return 0;
 }

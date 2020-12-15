@@ -24,11 +24,11 @@
 #define DG_SIGNAL2 		ILI9341_BLUE
 
 // pin definitions (DSO138)
-#define BOARD_LED 		PA15
+#define BOARD_LED 	PA15
 #define TEST_WAVE_PIN 	PA7     // 1KHz square wave output
-#define TRIGGER_IN		PA8
+#define TRIGGER_IN	PA8
 #define TRIGGER_LEVEL	PB8
-#define VGEN			PB9		// used to generate negative voltage in DSO138
+#define VGEN		PB9		// used to generate negative voltage in DSO138
 
 // captured inputs
 #define AN_CH1 		PA0	// analog channel 1
@@ -39,18 +39,18 @@
 #define DG_CH2 		PA14	// digital channel 2 - 5V tolerant pin. Pin mask throughout code has to match digital pin
 
 // misc analog inputs
-#define VSENSSEL1 		PA2
-#define VSENSSEL2		PA1
-#define CPLSEL			PA3
+#define VSENSSEL1 	PA2
+#define VSENSSEL2	PA1
+#define CPLSEL		PA3
 #define VSENSSEL1_channel 	2
 #define VSENSSEL2_channel	1
 #define CPLSEL_channel		3
 
 // switches
-#define ENCODER_SW		PB12
-#define ENCODER_A		PB13
-#define ENCODER_B		PB14
-#define BTN4 			PB15
+#define ENCODER_SW	PB12
+#define ENCODER_A	PB13
+#define ENCODER_B	PB14
+#define BTN4 		PB15
 
 // TFT pins are hard coded in Adafruit_TFTLCD_8bit_STM32.h file
 // TFT_RD         PB10

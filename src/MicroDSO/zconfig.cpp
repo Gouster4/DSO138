@@ -167,7 +167,7 @@ void formatSaveConfig(void)	{
 void saveParameter(uint16_t param, uint16_t data, bool flash_write)	{
 // ------------------------
 
-	uint16 status = EEPROM.write(param, data, flash_write);
+	uint16_t status = EEPROM.write(param, data, flash_write);
 	if(status != EEPROM_OK)	{
 		DBG_PRINT("Unable to save param in EEPROM, code: ");DBG_PRINTLN(status);
 	}

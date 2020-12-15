@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="100">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <df root="." name="0">
+      <df name="src">
+        <df name="Adafruit_GFX_">
+          <in>Adafruit_GFX_.cpp</in>
+        </df>
+        <df name="EEPROM">
+          <in>eeprom.cpp</in>
+        </df>
+        <df name="MicroDSO">
+          <in>MicroDSO.cpp</in>
+          <in>capture.cpp</in>
+          <in>display.cpp</in>
+          <in>encoder.cpp</in>
+          <in>hal.cpp</in>
+          <in>interface.cpp</in>
+          <in>io.cpp</in>
+          <in>variables.cpp</in>
+          <in>zconfig.cpp</in>
+        </df>
+        <df name="TFTLib">
+          <in>Adafruit_TFTLCD_8bit_STM32.cpp</in>
+          <in>hx8347g.cpp</in>
+          <in>hx8357x.cpp</in>
+          <in>ili932x.cpp</in>
+          <in>ili9341.cpp</in>
+        </df>
+      </df>
+      <in>MicroDSO1.cc</in>
+      <in>Wrapper.cpp</in>
+      <in>lcd_ili9341.cc</in>
+      <in>pMicroDSO.cc</in>
+    </df>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Arquivos Importantes"
+                   projectFiles="false"
+                   kind="IMPORTANT_FILES_FOLDER">
+      <itemPath>Makefile</itemPath>
+      <itemPath>nbproject/private/launcher.properties</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <sourceFolderFilter>^(nbproject)$</sourceFolderFilter>
+  <sourceRootList>
+    <Elem>.</Elem>
+  </sourceRootList>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Default" type="0">
+      <toolsSet>
+        <compilerSet>default</compilerSet>
+        <dependencyChecking>false</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <codeAssistance>
+      </codeAssistance>
+      <makefileType>
+        <makeTool>
+          <buildCommandWorkingDir>.</buildCommandWorkingDir>
+          <buildCommand>${MAKE} -f Makefile</buildCommand>
+          <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
+          <executablePath>MicroDSO</executablePath>
+          <ccTool>
+            <incDir>
+              <pElem>.</pElem>
+              <pElem>/usr/include/lxrad_X11</pElem>
+            </incDir>
+            <preprocessorList>
+              <Elem>_LX_X11</Elem>
+              <Elem>_REENTRANT</Elem>
+            </preprocessorList>
+          </ccTool>
+        </makeTool>
+        <preBuild>
+          <preBuildCommandWorkingDir>.</preBuildCommandWorkingDir>
+          <preBuildCommand></preBuildCommand>
+        </preBuild>
+      </makefileType>
+      <item path="MicroDSO1.cc" ex="false" tool="1" flavor2="11">
+      </item>
+      <item path="Wrapper.cpp" ex="false" tool="1" flavor2="11">
+      </item>
+      <item path="lcd_ili9341.cc" ex="false" tool="1" flavor2="11">
+      </item>
+      <item path="pMicroDSO.cc" ex="false" tool="1" flavor2="11">
+      </item>
+      <item path="src/Adafruit_GFX_/Adafruit_GFX_.cpp"
+            ex="false"
+            tool="1"
+            flavor2="11">
+      </item>
+      <item path="src/EEPROM/eeprom.cpp" ex="false" tool="1" flavor2="11">
+      </item>
+      <item path="src/MicroDSO/MicroDSO.cpp" ex="false" tool="1" flavor2="11">
+      </item>
+      <item path="src/MicroDSO/capture.cpp" ex="false" tool="1" flavor2="11">
+      </item>
+      <item path="src/MicroDSO/display.cpp" ex="false" tool="1" flavor2="11">
+      </item>
+      <item path="src/MicroDSO/encoder.cpp" ex="false" tool="1" flavor2="11">
+      </item>
+      <item path="src/MicroDSO/hal.cpp" ex="false" tool="1" flavor2="11">
+      </item>
+      <item path="src/MicroDSO/interface.cpp" ex="false" tool="1" flavor2="11">
+      </item>
+      <item path="src/MicroDSO/io.cpp" ex="false" tool="1" flavor2="11">
+      </item>
+      <item path="src/MicroDSO/variables.cpp" ex="false" tool="1" flavor2="11">
+      </item>
+      <item path="src/MicroDSO/zconfig.cpp" ex="false" tool="1" flavor2="11">
+      </item>
+      <item path="src/TFTLib/Adafruit_TFTLCD_8bit_STM32.cpp"
+            ex="false"
+            tool="1"
+            flavor2="11">
+      </item>
+      <item path="src/TFTLib/hx8347g.cpp" ex="false" tool="1" flavor2="11">
+      </item>
+      <item path="src/TFTLib/hx8357x.cpp" ex="false" tool="1" flavor2="11">
+      </item>
+      <item path="src/TFTLib/ili932x.cpp" ex="false" tool="1" flavor2="11">
+      </item>
+      <item path="src/TFTLib/ili9341.cpp" ex="false" tool="1" flavor2="11">
+      </item>
+    </conf>
+  </confs>
+</configurationDescriptor>

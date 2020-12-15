@@ -3,6 +3,7 @@
 
 
 
+#ifdef ARDUINO
 
 
 #ifdef  _EEPROM_F1_LOW_DESTINY
@@ -243,3 +244,5 @@ bool 	EE_Writes(uint16_t VirtualAddress,uint16_t HowMuchToWrite,uint32_t* Data)
 	return true;
 }
 //##########################################################################################################
+
+#endif

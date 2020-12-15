@@ -320,6 +320,7 @@ void setTriggerRising(void)	{
 	triggerRising=true;
 	saveParameter(PARAM_TRIGDIR, triggerRising);
 	repaintLabels();
+        setTriggerRising(triggerRising);
 }
 
 
@@ -333,6 +334,7 @@ void setTriggerFalling(void)	{
 	triggerRising=false;
 	saveParameter(PARAM_TRIGDIR, triggerRising);
 	repaintLabels();
+        setTriggerRising(triggerRising);
 }
 
 

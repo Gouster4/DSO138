@@ -10,10 +10,14 @@
     #define pgm_read_byte(addr) (*(const unsigned char *)(addr))
     #define pgm_read_word(addr) (*(const unsigned short *)(addr))
 
+#ifdef ARDUINO
 #if ARDUINO >= 100
  #include "Arduino.h"
 #else
  #include "WProgram.h"
+#endif
+#else
+#include"Wrapper.h"
 #endif
 
 //#include <Adafruit_GFX.h>
@@ -48,7 +52,7 @@
 #define TFT_CS         PC13
 #define TFT_RST        PB11
 
-#if 0
+#ifndef ARDUINO
 	// use old definition, standard bit toggling, low speed
 	#define RD_ACTIVE    digitalWrite(TFT_RD, LOW)
 	#define RD_IDLE      digitalWrite(TFT_RD, HIGH)

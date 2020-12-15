@@ -72,4 +72,5 @@ void ili9341_setRotation(uint8_t x)
 /*****************************************************************************/
 uint16_t ili9341_readPixel(int16_t x, int16_t y)
 {
+  return 0;
 }
