@@ -258,58 +258,63 @@ void decrementTLevel(void)	{
 }
 
 
-// A1, D1, D2, A2 
-// 0, 2, 3, 1
-// ------------------------
-void incrementWaves(void)	{
-// ------------------------
-	// add more waves
-	if(waves[1])	{
-		return;
-	}
-	else if(waves[3])	{
-		waves[1] = true;
-		saveParameter(PARAM_WAVES + 1, waves[1]);
-	}
-	else if(waves[2])	{
-		waves[3] = true;
-		saveParameter(PARAM_WAVES + 3, waves[3]);
-	}
-	else {
-		waves[2] = true;
-		saveParameter(PARAM_WAVES + 2, waves[2]);
-	}
+void incrementWaves(void) {
+    // Cycles through analog modes: A1+A2, A1, A2, none
+    // waves[0] = A1, waves[1] = A2
+    if (waves[0] && waves[1]) {
+        // Current state: A1 + A2 -> Next state: A1
+        waves[1] = false;
+        saveParameter(PARAM_WAVES + 1, waves[1]);
+    } else if (waves[0]) {
+        // Current state: A1 -> Next state: A2
+        waves[0] = false;
+        waves[1] = true;
+        saveParameter(PARAM_WAVES + 0, waves[0]);
+        saveParameter(PARAM_WAVES + 1, waves[1]);
+    } else if (waves[1]) {
+        // Current state: A2 -> Next state: none
+        waves[1] = false;
+        saveParameter(PARAM_WAVES + 1, waves[1]);
+    } else {
+        // Current state: none -> Next state: A1 + A2
+        waves[0] = true;
+        waves[1] = true;
+        saveParameter(PARAM_WAVES + 0, waves[0]);
+        saveParameter(PARAM_WAVES + 1, waves[1]);
+    }
 
-	repaintLabels();
+    repaintLabels();
 }
 
-
-
-
 // ------------------------
-void decrementWaves(void)	{
-// ------------------------
-	// remove waves
-	if(waves[1])	{
-		waves[1] = false;
-		saveParameter(PARAM_WAVES + 1, waves[1]);
-	}
-	else if(waves[3])	{
-		waves[3] = false;
-		saveParameter(PARAM_WAVES + 3, waves[3]);
-	}
-	else if(waves[2])	{
-		waves[2] = false;
-		saveParameter(PARAM_WAVES + 2, waves[2]);
-	}
-	else {
-		return;
-	}
-	
-	repaintLabels();
+
+void decrementWaves(void) {
+    // Cycles through digital modes: D1+D2, D1, D2, none
+    // waves[2] = D1, waves[3] = D2
+    if (waves[2] && waves[3]) {
+        // Current state: D1 + D2 -> Next state: D1
+        waves[3] = false;
+        saveParameter(PARAM_WAVES + 3, waves[3]);
+    } else if (waves[2]) {
+        // Current state: D1 -> Next state: D2
+        waves[2] = false;
+        waves[3] = true;
+        saveParameter(PARAM_WAVES + 2, waves[2]);
+        saveParameter(PARAM_WAVES + 3, waves[3]);
+    } else if (waves[3]) {
+        // Current state: D2 -> Next state: none
+        waves[3] = false;
+        saveParameter(PARAM_WAVES + 3, waves[3]);
+    } else {
+        // Current state: none -> Next state: D1 + D2
+        waves[2] = true;
+        waves[3] = true;
+        saveParameter(PARAM_WAVES + 2, waves[2]);
+        saveParameter(PARAM_WAVES + 3, waves[3]);
+    }
+
+    repaintLabels();
 }
-
-
 
 // ------------------------
 void setTriggerRising(void)	{

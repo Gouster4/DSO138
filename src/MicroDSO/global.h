@@ -1,5 +1,5 @@
 
-#define FIRMWARE_VERSION  "1.0"
+#define FIRMWARE_VERSION  "2025-09"
 
 // coment out to disable debug
 #define HWDEBUG 1
@@ -18,10 +18,10 @@
 #define NUM_SAMPLES 	2048	
 
 // display colours
-#define AN_SIGNAL1 		ILI9341_YELLOW
-#define AN_SIGNAL2 		ILI9341_MAGENTA
-#define DG_SIGNAL1 		ILI9341_RED
-#define DG_SIGNAL2 		ILI9341_BLUE
+#define AN_SIGNAL1 		ILI9341_BLUE
+#define AN_SIGNAL2 		ILI9341_GREEN
+#define DG_SIGNAL1 		ILI9341_MAGENTA
+#define DG_SIGNAL2 		ILI9341_RED
 
 // pin definitions (DSO138)
 #define BOARD_LED 	PA15
