@@ -744,7 +744,7 @@ void banner(void)	{
 	tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
 	tft.setTextSize(2);
 	tft.setCursor(110, 30);
-	tft.print("MicroDSO");
+	tft.print("~Oscilloscope");
 	tft.drawRect(100, 25, 112, 25, ILI9341_WHITE);
 
 	tft.setTextSize(1);
@@ -754,7 +754,7 @@ void banner(void)	{
 	tft.setCursor(30, 95);
 	tft.print("Usage: ");
 	tft.setTextColor(ILI9341_YELLOW, ILI9341_BLACK);
-	tft.print("https://github.com/lcgamboa/MicroDSO");
+	tft.print("https://github.com/gouster4/DSO138");
 
 	tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
 	tft.setCursor(30, 120);
