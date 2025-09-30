@@ -741,29 +741,34 @@ void clearStats(void)	{
 // ------------------------
 void banner(void)	{
 // ------------------------
-	tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+	tft.setTextColor(ILI9341_MAGENTA, ILI9341_BLACK);
 	tft.setTextSize(2);
 	tft.setCursor(110, 30);
-	tft.print("MicroDSO");
-	tft.drawRect(100, 25, 112, 25, ILI9341_WHITE);
+	tft.print("DSO138");
+	tft.drawRect(100, 25, 88, 25, ILI9341_MAGENTA);
 
+	tft.setTextColor(ILI9341_CYAN, ILI9341_BLACK);
 	tft.setTextSize(1);
 	tft.setCursor(30, 70);
 	tft.print("Dual Channel O-Scope with logic analyzer");
 
+	tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
 	tft.setCursor(30, 95);
 	tft.print("Usage: ");
-	tft.setTextColor(ILI9341_YELLOW, ILI9341_BLACK);
-	tft.print("https://github.com/lcgamboa/MicroDSO");
+	tft.setTextColor(ILI9341_BLUE, ILI9341_BLACK);
+	tft.print("https://github.com/Gouster4/DSO138");
 
-	tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+	tft.setTextColor(ILI9341_YELLOW, ILI9341_BLACK);
 	tft.setCursor(30, 120);
 	tft.print("DSO-138 hardware by JYE-Tech");
-	
+
+	tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
 	tft.setCursor(30, 145);
 	tft.print("Firmware version: ");
+	tft.setTextColor(ILI9341_GREEN, ILI9341_BLACK);
 	tft.print(FIRMWARE_VERSION);
 
+	tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
 	tft.setTextSize(1);
 	tft.setCursor(30, 200);
 	tft.print("GNU GENERAL PUBLIC LICENSE Version 3");
