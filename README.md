@@ -34,8 +34,27 @@ This firmware can be used on stock DSO-138 hardware as well. Select one of the p
 Extra features come at an additional cost. In the case of DLO-138, it is the loss of lowest timebase. Maximum sampling rate in DLO-138 is 20 µs/div instead of 10 µs/div. In the 20 µs/div range, firmware under-samples ADC channels, often reading same data twice. To use the second analog channel, analog front end has to be duplicated on a daughter board. On a stock hardware, this firmware can be used to provide two digital logic channels.
 
 # Build
-The build environment uses Arduino. For help with setting up IDE visit http://www.stm32duino.com
 
+[Use ArduinoIDE](https://www.arduino.cc/en/software/) (for exammple 2.3.6)
+
+In Preferences add this url to Aditional boards manager URLs: [https://github.com/stm32duino/BoardManagerFiles/raw/master/STM32/package_stm_index.json](https://github.com/stm32duino/BoardManagerFiles/raw/master/STM32/package_stm_index.json)
+
+Install "[DEPRECATED - Please use new package index] STM32 Cores" version 1.9.0 using Board Manager
+
+Select Board: [DEPRECATED - Please use new package index] STM32 Cores > "Generic STM32F1 Series"
+
+Select Board part number: "Generic F103C8"
+
+Select U(S)ART support: "Enabled (generic Serial)"
+
+Rest of settings are optional:
+
+   -USB Support: "None"
+	
+   -Optimalize: "Smallest (-Os)"
+	
+   -C Runtime Library: "Newlib Nano"
+	
 # Hardware
 Following changes can be applied selectively, to get maximum functionality from board. The firmware can be run on unmodified hardware as well.
 ![Mod Schematic](https://github.com/ardyesp/DLO-138/blob/master/pics/HardwareMod.png)
