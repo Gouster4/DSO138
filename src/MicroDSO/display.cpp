@@ -511,6 +511,19 @@ void drawLabels(void)	{
 		tft.drawFastHLine(trigX - 1, TFT_HEIGHT -vOffset + 2, 5, ILI9341_GREEN);
 		tft.fillTriangle(trigX + 2, 231, trigX + 4, 233, trigX + 6, 231, ILI9341_GREEN);
 	}	
+	tft.setCursor(285, GRID_HEIGHT + vOffset + 4);
+	if(currentFocus == L_bufferSize)
+		tft.drawRect(280, GRID_HEIGHT + vOffset, 30, vOffset, ILI9341_WHITE);
+	
+	if(halfBufferMode)	{
+		tft.setTextColor(ILI9341_RED, ILI9341_BLACK);
+		tft.print("1/2");
+	}
+	else	{
+		tft.setTextColor(ILI9341_GREEN, ILI9341_BLACK);
+		tft.print("BUF");
+	}
+	
 	
 	
 	// draw trigger level on right side
