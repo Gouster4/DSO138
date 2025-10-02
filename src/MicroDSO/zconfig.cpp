@@ -81,6 +81,47 @@ void loadConfig(bool reset)	{
 	zeroVoltageA1 = EEPROM.read(PARAM_ZERO1);
 	zeroVoltageA2 = EEPROM.read(PARAM_ZERO2);
 	
+	// Load buffer size setting
+	data = EEPROM.read(PARAM_BUFSIZE);
+	if(data <= BUF_EIGHTH) {
+		bufferMode = data;
+	} else {
+		bufferMode = BUF_FULL;
+	}
+	currentBufferSize = bufferSizes[bufferMode];
+	
+	// Free any existing buffers and allocate new ones
+	if(ch1Capture) {
+		free(ch1Capture);
+		free(ch2Capture);
+		free(bitStore);
+	}
+	ch1Capture = (uint16_t*)malloc(currentBufferSize * sizeof(uint16_t));
+	ch2Capture = (uint16_t*)malloc(currentBufferSize * sizeof(uint16_t));
+	bitStore = (uint16_t*)malloc(currentBufferSize * sizeof(uint16_t));
+	
+	if(ch1Capture && ch2Capture && bitStore) {
+		memset(ch1Capture, 0, currentBufferSize * sizeof(uint16_t));
+		memset(ch2Capture, 0, currentBufferSize * sizeof(uint16_t));
+		memset(bitStore, 0, currentBufferSize * sizeof(uint16_t));
+	}
+	// Adjust xCursor to stay within new buffer bounds
+uint16_t maxXCursor = (currentBufferSize > GRID_WIDTH) ? 
+                     (currentBufferSize - GRID_WIDTH) : 0;
+	if(xCursor > maxXCursor) {
+		xCursor = maxXCursor;
+	}
+
+	// Check zoom compatibility
+	adjustZoomForBufferSize();
+	
+	// Load zoom factor
+	data = EEPROM.read(PARAM_ZOOM);
+	if(data >= ZOOM_MIN && data <= ZOOM_MAX) {
+		zoomFactor = data;
+	} else {
+		zoomFactor = ZOOM_DEFAULT;
+	}
 	
 	DBG_PRINTLN("Loaded config:");
 	DBG_PRINT("Timebase: ");DBG_PRINTLN(currentTimeBase);
@@ -93,8 +134,9 @@ void loadConfig(bool reset)	{
 	DBG_PRINT("Print Stats: ");DBG_PRINTLN(printStats);
 	DBG_PRINT("Wave1 Zero: ");DBG_PRINTLN(zeroVoltageA1);
 	DBG_PRINT("Wave2 Zero: ");DBG_PRINTLN(zeroVoltageA2);
-	
-	// check if EEPROM left enough space, or else invoke formatSaveConfig
+	DBG_PRINT("Buffer mode: ");DBG_PRINTLN(bufferModeNames[bufferMode]);
+	DBG_PRINT("Buffer Size: ");DBG_PRINTLN(bufferModeNames[bufferMode]);
+	DBG_PRINT("Zoom Factor: ");DBG_PRINTLN(zoomFactor);
 }
 
 
@@ -128,6 +170,9 @@ void loadDefaults(void)	{
 	
 	zeroVoltageA1 = 1985;
 	zeroVoltageA2 = 1985;
+	bufferMode = BUF_FULL;
+	currentBufferSize = NUM_SAMPLES;
+	zoomFactor = ZOOM_DEFAULT;
 }
 
 
@@ -159,6 +204,8 @@ void formatSaveConfig(void)	{
 	
 	saveParameter(PARAM_ZERO1, zeroVoltageA1, false);
 	saveParameter(PARAM_ZERO2, zeroVoltageA2, true);
+	saveParameter(PARAM_BUFSIZE, bufferMode, false);
+	saveParameter(PARAM_ZOOM, zoomFactor, false);
 }
 
 

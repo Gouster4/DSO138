@@ -99,7 +99,203 @@ void readESwitchISR(void)	{
 }
 
 
+// ------------------------
+void cycleBufferSize(void) {
+// ------------------------
+    // Free existing buffers if they exist
+    if(ch1Capture) {
+        free(ch1Capture);
+        free(ch2Capture);
+        free(bitStore);
+        ch1Capture = ch2Capture = bitStore = NULL;
+    }
+    
+    // Cycle to next buffer mode
+    bufferMode = (bufferMode + 1) % 4;
+    currentBufferSize = bufferSizes[bufferMode];
+    
+    // Allocate new buffers
+    ch1Capture = (uint16_t*)malloc(currentBufferSize * sizeof(uint16_t));
+    ch2Capture = (uint16_t*)malloc(currentBufferSize * sizeof(uint16_t));
+    bitStore = (uint16_t*)malloc(currentBufferSize * sizeof(uint16_t));
+    
+    // Initialize buffers to zero
+    if(ch1Capture && ch2Capture && bitStore) {
+        memset(ch1Capture, 0, currentBufferSize * sizeof(uint16_t));
+        memset(ch2Capture, 0, currentBufferSize * sizeof(uint16_t));
+        memset(bitStore, 0, currentBufferSize * sizeof(uint16_t));
+    } else {
+        // Handle allocation failure
+        DBG_PRINTLN("Buffer allocation failed!");
+        // Fall back to full buffer
+        bufferMode = BUF_FULL;
+        currentBufferSize = NUM_SAMPLES;
+        // Re-allocate full buffers
+        ch1Capture = (uint16_t*)malloc(currentBufferSize * sizeof(uint16_t));
+        ch2Capture = (uint16_t*)malloc(currentBufferSize * sizeof(uint16_t));
+        bitStore = (uint16_t*)malloc(currentBufferSize * sizeof(uint16_t));
+    }
+    
+    // Reset sampling indices
+    sIndex = 0;
+    tIndex = 0;
+    triggered = false;
+    
+    // Adjust xCursor to stay within new buffer bounds
+    uint16_t maxXCursor = (currentBufferSize > GRID_WIDTH) ? 
+                         (currentBufferSize - GRID_WIDTH) : 0;
+    if(xCursor > maxXCursor) {
+        xCursor = maxXCursor;
+    }
+    
+    // Check if current zoom is compatible with new buffer size
+    adjustZoomForBufferSize();
+    
+    saveParameter(PARAM_BUFSIZE, bufferMode);
+    repaintLabels();
+    
+    DBG_PRINT("Buffer changed to: ");
+    DBG_PRINT(currentBufferSize);
+    DBG_PRINT(" samples (");
+    DBG_PRINT(currentBufferSize * 3 * 2);
+    DBG_PRINTLN(" bytes)");
+}
 
+// ------------------------
+void initializeBuffers(void) {
+// ------------------------
+    // Allocate initial buffers
+    ch1Capture = (uint16_t*)malloc(currentBufferSize * sizeof(uint16_t));
+    ch2Capture = (uint16_t*)malloc(currentBufferSize * sizeof(uint16_t));
+    bitStore = (uint16_t*)malloc(currentBufferSize * sizeof(uint16_t));
+    
+    if(ch1Capture && ch2Capture && bitStore) {
+        memset(ch1Capture, 0, currentBufferSize * sizeof(uint16_t));
+        memset(ch2Capture, 0, currentBufferSize * sizeof(uint16_t));
+        memset(bitStore, 0, currentBufferSize * sizeof(uint16_t));
+        DBG_PRINT("Initial buffers allocated: ");
+        DBG_PRINT(currentBufferSize);
+        DBG_PRINTLN(" samples");
+    } else {
+        DBG_PRINTLN("CRITICAL: Initial buffer allocation failed!");
+    }
+}
+
+// ------------------------
+void adjustZoomForBufferSize(void) {
+// ------------------------
+    // Calculate minimum zoom that can be displayed with current buffer
+    uint16_t minZoomForBuffer = calculateMinZoomForBuffer();
+    
+    if(zoomFactor < minZoomForBuffer) {
+        // Current zoom is too high for buffer, adjust to maximum possible
+        zoomFactor = minZoomForBuffer;
+        saveParameter(PARAM_ZOOM, zoomFactor);
+        adjustXCursorForZoom();
+    }
+}
+
+// ------------------------
+uint16_t calculateMinZoomForBuffer(void) {
+// ------------------------
+    // Returns the minimum zoom factor that can display the entire buffer
+    // We want at least GRID_WIDTH samples visible
+    if(currentBufferSize <= GRID_WIDTH) {
+        return 10; // 1.0x - can't zoom out further
+    }
+    
+    // Calculate the zoom needed to fit the buffer on screen
+    float requiredZoom = (float)GRID_WIDTH / currentBufferSize * 10.0;
+    uint16_t minZoom = (uint16_t)requiredZoom;
+    
+    // Ensure we don't go below minimum zoom
+    if(minZoom < ZOOM_MIN) {
+        return ZOOM_MIN;
+    }
+    
+    return minZoom;
+}
+
+// ------------------------
+void incrementZoom(void) {
+// ------------------------
+    uint16_t newZoom = zoomFactor;
+    
+    if(zoomFactor < ZOOM_MAX) {
+        if(zoomFactor < 10) {
+            // 0.1x to 0.9x: increment by 1 (0.1 steps)
+            newZoom++;
+        } else {
+            // 1x to 9x: increment by 10 (1.0 steps)
+            newZoom += 10;
+            // Don't exceed maximum (100 = 10x)
+            if(newZoom > ZOOM_MAX) newZoom = ZOOM_MAX;
+        }
+        
+        // Check if new zoom is compatible with current buffer size
+        if(isZoomCompatibleWithBuffer(newZoom)) {
+            zoomFactor = newZoom;
+            saveParameter(PARAM_ZOOM, zoomFactor);
+            repaintLabels();
+        }
+    }
+}
+
+// ------------------------
+void decrementZoom(void) {
+// ------------------------
+    uint16_t newZoom = zoomFactor;
+    
+    if(zoomFactor > ZOOM_MIN) {
+        if(zoomFactor <= 10) {
+            // 0.2x to 1.0x: decrement by 1 (0.1 steps)
+            newZoom--;
+        } else {
+            // 2x to 10x: decrement by 10 (1.0 steps)
+            newZoom -= 10;
+            // Don't go below 1.0x
+            if(newZoom < 10) newZoom = 10;
+        }
+        
+        // Always allow zooming in (higher zoom factors)
+        // Only check compatibility when zooming out
+        if(newZoom > zoomFactor || isZoomCompatibleWithBuffer(newZoom)) {
+            zoomFactor = newZoom;
+            saveParameter(PARAM_ZOOM, zoomFactor);
+            repaintLabels();
+        }
+    }
+}
+
+// ------------------------
+void adjustXCursorForZoom(void) {
+// ------------------------
+    float zoomMultiplier = getZoomMultiplier();
+    uint16_t visibleSamples = (uint16_t)(GRID_WIDTH * zoomMultiplier);
+    uint16_t maxXCursor = (currentBufferSize > visibleSamples) ? 
+                         (currentBufferSize - visibleSamples) : 0;
+    
+    if(xCursor > maxXCursor) {
+        xCursor = maxXCursor;
+        saveParameter(PARAM_XCURSOR, xCursor);
+    }
+}
+
+// ------------------------
+float getZoomMultiplier(void) {
+// ------------------------
+    // Convert internal zoom factor to multiplier
+    // zoomFactor 10 = 1.0x, 20 = 2.0x, 5 = 0.5x, etc.
+    return zoomFactor / 10.0;
+}
+
+// ------------------------
+bool isZoomCompatibleWithBuffer(uint16_t zoom) {
+// ------------------------
+    float zoomMultiplier = zoom / 10.0;
+    uint16_t requiredSamples = (uint16_t)(GRID_WIDTH * zoomMultiplier);
+    return (requiredSamples <= currentBufferSize);
+}
 
 // ------------------------
 void resetParam(void)	{
@@ -110,6 +306,11 @@ void resetParam(void)	{
 			// set trigger level to 0
 			setTriggerLevel(0);
 			saveParameter(PARAM_TLEVEL, 0);
+			repaintLabels();
+			break;
+		case L_zoom:
+			zoomFactor = ZOOM_DEFAULT;
+			saveParameter(PARAM_ZOOM, zoomFactor);
 			repaintLabels();
 			break;
 		case L_window:
@@ -135,6 +336,9 @@ void resetParam(void)	{
 		case L_triggerType:
 			saveParameter(PARAM_PREAMBLE, PREAMBLE_VALUE, true); //salve parameters to flash
 			clearWaves();
+			break;
+		case L_bufferSize:
+			cycleBufferSize();
 			break;
 		default:
 			// toggle stats printing
@@ -203,6 +407,9 @@ void encoderChanged(int steps)	{
 		case L_triggerEdge:
 			if(steps > 0) setTriggerRising(); else setTriggerFalling();
 			break;
+		case L_bufferSize:  
+			cycleBufferSize();
+			break;
 		case L_triggerLevel:
 			if(steps > 0) incrementTLevel(); else decrementTLevel();
 			break;
@@ -211,6 +418,9 @@ void encoderChanged(int steps)	{
 			break;
 		case L_window:
 			if(steps > 0) changeXCursor(xCursor + XCURSOR_STEP); else changeXCursor(xCursor - XCURSOR_STEP);
+			break;
+		case L_zoom:
+			if(steps > 0) incrementZoom(); else decrementZoom();
 			break;
 		case L_vPos1:
 			if(steps > 0) changeYCursor(0, yCursors[0] - YCURSOR_STEP); else changeYCursor(0, yCursors[0] + YCURSOR_STEP);
@@ -435,15 +645,22 @@ void changeYCursor(uint8_t num, int16_t yPos)	{
 
 
 // ------------------------
-void changeXCursor(int16_t xPos)	{
+void changeXCursor(int16_t xPos) {
 // ------------------------
-	if(xPos < 0)
-		xPos = 0;
-	
-	if(xPos > (NUM_SAMPLES - GRID_WIDTH))
-		xPos = NUM_SAMPLES - GRID_WIDTH;
-	
-	xCursor = xPos;
-	saveParameter(PARAM_XCURSOR, xCursor);
-	repaintLabels();
+    // Calculate maximum xCursor based on current buffer and zoom
+    float zoomMultiplier = getZoomMultiplier();
+    uint16_t visibleSamples = (uint16_t)(GRID_WIDTH * zoomMultiplier);
+    uint16_t maxXCursor = (currentBufferSize > visibleSamples) ? 
+                         (currentBufferSize - visibleSamples) : 0;
+    
+    if(xPos < 0)
+        xPos = 0;
+    
+    if(xPos > maxXCursor)
+        xPos = maxXCursor;
+    
+    xCursor = xPos;
+    saveParameter(PARAM_XCURSOR, xCursor);
+    repaintLabels();
 }
+

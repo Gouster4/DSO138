@@ -1,9 +1,9 @@
 #include "global.h"
 
 // global capture variables
-extern uint16_t ch1Capture[NUM_SAMPLES];
-extern uint16_t ch2Capture[NUM_SAMPLES];
-extern uint16_t bitStore[NUM_SAMPLES];
+extern uint16_t *ch1Capture;
+extern uint16_t *ch2Capture;
+extern uint16_t *bitStore;
 extern uint16_t sIndex;
 extern uint16_t tIndex;
 extern volatile bool triggered;
@@ -43,3 +43,10 @@ extern int16_t zeroVoltageA1, zeroVoltageA2;
 enum {T20US, T30US, T50US, T0_1MS, T0_2MS, T0_5MS, T1MS, T2MS, T5MS, T10MS, T20MS, T50MS};
 extern const char* tbNames[]; 
 extern uint8_t currentTimeBase;
+extern uint8_t bufferMode;
+extern uint16_t currentBufferSize;
+extern const uint16_t bufferSizes[];
+
+// zoom control
+extern uint16_t zoomFactor;
+extern const char* bufferModeNames[];

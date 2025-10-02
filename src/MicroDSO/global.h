@@ -1,6 +1,6 @@
 
 #define FIRMWARE_VERSION  "2025-09"
-
+#define PROJECT_URL "https://github.com/Gouster4/DSO138"
 // coment out to disable debug
 #define HWDEBUG 1
 
@@ -15,7 +15,12 @@
 #define SERIAL_BAUD_RATE	115200
 
 // analog and digital samples storage depth
-#define NUM_SAMPLES 	2048	
+#define NUM_SAMPLES       2048
+#define NUM_SAMPLES_HALF  1024
+#define NUM_SAMPLES_QUARTER 512
+#define NUM_SAMPLES_EIGHTH  256
+#define PARAM_BUFSIZE	17
+enum {BUF_FULL, BUF_HALF, BUF_QUARTER, BUF_EIGHTH};
 
 // display colours
 #define AN_SIGNAL1 		ILI9341_BLUE
@@ -74,6 +79,12 @@
 
 #define LED_ON	digitalWrite(BOARD_LED, LOW)
 #define LED_OFF	digitalWrite(BOARD_LED, HIGH)
+
+//zoom
+#define PARAM_ZOOM		18
+#define ZOOM_MIN 1       // 0.1x
+#define ZOOM_MAX 100     // 10x
+#define ZOOM_DEFAULT 10  // 1x
 
 // number of pixels waveform moves left/right or up/down
 #define XCURSOR_STEP	25

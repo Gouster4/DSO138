@@ -5,6 +5,7 @@
 #include "display.h"
 #include "capture.h"
 #include "zconfig.h"
+#include "interface.h"
 
 uint8_t triggerType;
 
@@ -39,6 +40,10 @@ MicroDSO_Setup (void)
   // load scope config or factory reset to defaults
   loadConfig (digitalRead (BTN4) == LOW);
 
+	//load buffers
+	if(!ch1Capture || !ch2Capture || !bitStore) {
+        initializeBuffers();
+    }
   // init the IL9341 display
   initDisplay ();
 }
