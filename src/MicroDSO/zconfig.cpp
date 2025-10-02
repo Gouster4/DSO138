@@ -81,15 +81,6 @@ void loadConfig(bool reset)	{
 	zeroVoltageA1 = EEPROM.read(PARAM_ZERO1);
 	zeroVoltageA2 = EEPROM.read(PARAM_ZERO2);
 	
-		// Load buffer size setting
-	data = EEPROM.read(PARAM_BUFSIZE);
-	halfBufferMode = (data == 1);
-	currentBufferSize = halfBufferMode ? NUM_SAMPLES_HALF : NUM_SAMPLES;
-	
-	// Adjust xCursor to stay within new buffer bounds
-	if(xCursor > (currentBufferSize - GRID_WIDTH))
-		xCursor = currentBufferSize - GRID_WIDTH;
-	
 	
 	DBG_PRINTLN("Loaded config:");
 	DBG_PRINT("Timebase: ");DBG_PRINTLN(currentTimeBase);
@@ -102,7 +93,6 @@ void loadConfig(bool reset)	{
 	DBG_PRINT("Print Stats: ");DBG_PRINTLN(printStats);
 	DBG_PRINT("Wave1 Zero: ");DBG_PRINTLN(zeroVoltageA1);
 	DBG_PRINT("Wave2 Zero: ");DBG_PRINTLN(zeroVoltageA2);
-	DBG_PRINT("Buffer Size: ");DBG_PRINTLN(halfBufferMode ? "HALF" : "FULL");
 	
 	// check if EEPROM left enough space, or else invoke formatSaveConfig
 }
@@ -138,8 +128,6 @@ void loadDefaults(void)	{
 	
 	zeroVoltageA1 = 1985;
 	zeroVoltageA2 = 1985;
-	halfBufferMode = false;
-	currentBufferSize = NUM_SAMPLES;
 }
 
 
@@ -171,7 +159,6 @@ void formatSaveConfig(void)	{
 	
 	saveParameter(PARAM_ZERO1, zeroVoltageA1, false);
 	saveParameter(PARAM_ZERO2, zeroVoltageA2, true);
-	saveParameter(PARAM_BUFSIZE, halfBufferMode, false);
 }
 
 

@@ -43,5 +43,3 @@ extern int16_t zeroVoltageA1, zeroVoltageA2;
 enum {T20US, T30US, T50US, T0_1MS, T0_2MS, T0_5MS, T1MS, T2MS, T5MS, T10MS, T20MS, T50MS};
 extern const char* tbNames[]; 
 extern uint8_t currentTimeBase;
-extern bool halfBufferMode;
-extern uint16_t currentBufferSize;

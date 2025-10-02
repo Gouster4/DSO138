@@ -15,7 +15,7 @@
 #define ADC_MAX_VAL   4096
 #define ADC_2_GRID    800
 
-enum {L_timebase, L_triggerType, L_triggerEdge, L_bufferSize, L_triggerLevel, L_waves, L_window, L_vPos1, L_vPos2, L_vPos3, L_vPos4};
+enum {L_timebase, L_triggerType, L_triggerEdge, L_triggerLevel, L_waves, L_window, L_vPos1, L_vPos2, L_vPos3, L_vPos4};
 
 extern uint8_t currentFocus;
 extern bool printStats;

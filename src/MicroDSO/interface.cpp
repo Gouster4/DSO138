@@ -100,19 +100,6 @@ void readESwitchISR(void)	{
 
 
 
-// ------------------------
-void toggleBufferSize(void)	{
-// ------------------------
-	halfBufferMode = !halfBufferMode;
-	currentBufferSize = halfBufferMode ? NUM_SAMPLES_HALF : NUM_SAMPLES;
-	
-	// Adjust xCursor to stay within new buffer bounds
-	if(xCursor > (currentBufferSize - GRID_WIDTH))
-		xCursor = currentBufferSize - GRID_WIDTH;
-	
-	saveParameter(PARAM_BUFSIZE, halfBufferMode);
-	repaintLabels();
-}
 
 // ------------------------
 void resetParam(void)	{
@@ -148,9 +135,6 @@ void resetParam(void)	{
 		case L_triggerType:
 			saveParameter(PARAM_PREAMBLE, PREAMBLE_VALUE, true); //salve parameters to flash
 			clearWaves();
-			break;
-		case L_bufferSize:
-			toggleBufferSize();
 			break;
 		default:
 			// toggle stats printing
@@ -218,9 +202,6 @@ void encoderChanged(int steps)	{
 			break;
 		case L_triggerEdge:
 			if(steps > 0) setTriggerRising(); else setTriggerFalling();
-			break;
-		case L_bufferSize:  
-			toggleBufferSize();
 			break;
 		case L_triggerLevel:
 			if(steps > 0) incrementTLevel(); else decrementTLevel();

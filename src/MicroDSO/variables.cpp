@@ -27,5 +27,3 @@ int16_t zeroVoltageA1, zeroVoltageA2;
 // timebase enumerations and store
 const char* tbNames[] = {"20 uS", "30 uS", "50 uS", "0.1 mS", "0.2 mS", "0.5 mS", "1 mS", "2 mS", "5 mS", "10 mS", "20 mS", "50 mS"}; 
 uint8_t currentTimeBase;
-bool halfBufferMode = false;
-uint16_t currentBufferSize = NUM_SAMPLES;
