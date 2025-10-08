@@ -1,6 +1,8 @@
 #ifndef IO_H
 #define IO_H
 
+extern int16_t trigLevel;
+
 void readInpSwitches(void);
 void blinkLED(void);
 void initIO(void);

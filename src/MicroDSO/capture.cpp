@@ -5,7 +5,12 @@
 #include "capture.h"
 #include "display.h"
 
+#include "MicroDSO.h"
+#include "io.h"
  
+#define DIGITAL_D1_MASK 0x01  // Bit 0 for digital channel 1
+#define DIGITAL_D2_MASK 0x02  // Bit 1 for digital channel 2
+
 void triggerISR(void);
 void startScanTimeout(int16_t mSec);
 void startSampling(int16_t lDelay);
@@ -159,206 +164,176 @@ void scanTimeoutISR(void) {
 
 
 // ------------------------
-void startSampling(int16_t lDelay)	{
+void sampleSinglePoint(void) {
 // ------------------------
-	keepSampling = true;
-	minSamplesAcquired = false;
-#ifdef ARDUINO
-	uint16_t lCtr = 0;
-#endif	
-	// clear old dataset
-	samplingTime = 0;
-	triggered = false;
-	sIndex = 0;
-	
-	prevTime = micros();
-	
-#ifdef ARDUINO
-	if(lDelay < 0)	{
+    // Read ADC values directly
+    uint16_t adc1_val = adc_read(ADC1);
+    uint16_t adc2_val = adc_read(ADC2);
+    
+    uint16_t digital_val = 0;
+    if(digitalRead(DG_CH1) == HIGH) digital_val |= DIGITAL_D1_MASK;
+    if(digitalRead(DG_CH2) == HIGH) digital_val |= DIGITAL_D2_MASK;
+    
+    // Store in buffer for display
+    if(directSampleCount < currentBufferSize) {
+        ch1Capture[directSampleCount] = adc1_val;
+        ch2Capture[directSampleCount] = adc2_val;
+        bitStore[directSampleCount] = digital_val;
+    }
+    
+    // Update display at controlled rate to avoid flicker
+    if(millis() - lastDirectDrawTime >= 10) { // 10ms = 100Hz update
+        lastDirectDrawTime = millis();
+        
+        if(xyMode) {
+            drawXYWaveform(directSampleCount);
+        } else {
+            drawWaves();
+        }
+    }
+    
+    directSampleCount++;
+    if(directSampleCount >= currentBufferSize) {
+        directSampleCount = 0;
+    }
+}
 
-		asm volatile(
-			"	ldrh r9, [%[sIndex]]			\n\t"	// load sIndex value
+bool samplingActive = false;
+uint8_t samplingState = SAMPLING_IDLE;
+static bool samplingWithTimeout = false;
+static uint32_t samplingStartTime = 0;
 
-			"top_1:								\n\t"
-			"	ldrb r0, [%[keepSampling]]		\n\t"	// while(keepSampling)
-			"	cbz r0, finished_1				\n\t"
+// ------------------------
+void startSampling(bool wTimeout) {
+// ------------------------
+    samplingActive = true;
+    samplingState = SAMPLING_START;
+    samplingWithTimeout = wTimeout;
+    samplingStartTime = millis();
+    keepSampling = true;
+    minSamplesAcquired = false;
+    samplingTime = 0;
+    triggered = false;
+    sIndex = 0;
+    prevTime = micros();
+    
+    if(wTimeout) {
+        startScanTimeout(tDly);
+    }
+}
 
-			"	ldr r1, =0x40012400				\n\t"	// load ADC1 base address, ADC2 = +0x400
+// ------------------------
+void stopSampling(void) {
+// ------------------------
+    samplingActive = false;
+    samplingState = SAMPLING_IDLE;
+    keepSampling = false;
+    Timer2.pause(); // Stop timeout timer
+}
 
-			"	ldr r0, [r1, #0x4C]				\n\t"	// get and save ADC1 DR
-			"	strh r0, [%[ch1], r9, lsl #1]	\n\t"
-			"	ldr r0, [r1, #0x44C]			\n\t"	// get and save ADC2 DR
-			"	strh r0, [%[ch2], r9, lsl #1]	\n\t"
+// ------------------------
+bool isSamplingComplete(void) {
+// ------------------------
+    return samplingState == SAMPLING_COMPLETE;
+}
 
-			"	ldr r1, =0x40010800				\n\t"	// load GPIOA address
-			"	ldr r0, [r1, #0x08]				\n\t"	// get and save GPIOA IDR
-			"	strh r0, [%[dCH], r9, lsl #1]	\n\t"
+// ------------------------
+void processSampling(void) {
+// ------------------------
+    if(!samplingActive) return;
+    
+    switch(samplingState) {
+        case SAMPLING_START:
+            // Initialize sampling
+            samplingState = SAMPLING_RUNNING;
+            break;
+            
+        case SAMPLING_RUNNING:
+            // Check for timeout
+            if(samplingWithTimeout && (millis() - samplingStartTime > tDly)) {
+                keepSampling = false;
+            }
+            
+            // Execute one chunk of sampling
+            sampleWavesChunk();
+            break;
+            
+        case SAMPLING_COMPLETE:
+            // Sampling finished, clean up
+            samplingActive = false;
+            Timer2.pause();
+            break;
+    }
+}
 
-			"	adds r9, #1						\n\t"	// increment sIndex
-			"	cmp r9, %[nSamp]				\n\t"	// if(sIndex == NUM_SAMPLES)
-			"	bne notOverflowed_1				\n\t"
-			"	mov r9, #0						\n\t"	// sIndex = 0;
-
-			"	stmfd sp!,{r9, %[keepSampling], %[sIndex], %[triggered], %[ch1], %[ch2], %[dCH], %[lCtr]}	\n\t"
-			"	bl %[snapMicros]				\n\t"	// micros() - r0 contains the 32bit result
-			"	ldmfd sp!,{r9, %[keepSampling], %[sIndex], %[triggered], %[ch1], %[ch2], %[dCH], %[lCtr]}	\n\t"
-
-			"notOverflowed_1:					\n\t"
-			"	strh r9, [%[sIndex]]			\n\t"	// save sIndex
-
-			"	ldrb r0, [%[triggered]]			\n\t"	// if(triggered)
-			"	cbz r0, notTriggered_1			\n\t"
-
-			"	adds %[lCtr], #1				\n\t"	// lCtr++
-			"	cmp %[lCtr], %[halfSamples]		\n\t"	// if(lCtr == NUM_SAMPLES/2)
-			"	beq finished_1					\n\t"
-
-			"notTriggered_1:					\n\t"
-			"	b top_1							\n\t"
-			"finished_1:						\n\t"
-
-			: 
-			: [keepSampling] "r" (keepSamplingPtr), [sIndex] "r" (sIndexPtr), [triggered] "r" (triggeredPtr), 
-				[ch1] "r" (ch1Capture), [ch2] "r" (ch2Capture), [dCH] "r" (bitStore), [lCtr] "r" (lCtr),
-				[nSamp] "I" (NUM_SAMPLES), [halfSamples] "I" (NUM_SAMPLES/2),
-				[snapMicros] "i" (snapMicros)
-			: "r0", "r1", "r9", "memory", "cc"
-		);		
-	
-	}
-	else if(lDelay == 0)	{
-		
-		asm volatile(
-			"	ldrh r9, [%[sIndex]]			\n\t"	// load sIndex value
-
-			"top_2:								\n\t"
-			"	ldrb r0, [%[keepSampling]]		\n\t"	// while(keepSampling)
-			"	cbz r0, finished_2				\n\t"
-
-			"	ldr r1, =0x40012400				\n\t"	// load ADC1 base address, ADC2 = +0x400
-
-			"waitADC1_2:						\n\t"
-			"	ldr r0, [r1, #0]				\n\t"	// ADC1 SR
-			"	lsls r0, r0, #30				\n\t"	// get to EOC bit
-			"	bpl	waitADC1_2					\n\t"
-
-			"waitADC2_2:						\n\t"
-			"	ldr r0, [r1, #0x400]			\n\t"	// ADC2 SR
-			"	lsls r0, r0, #30				\n\t"	// get to EOC bit
-			"	bpl	waitADC2_2					\n\t"
-
-			"	ldr r0, [r1, #0x4C]				\n\t"	// get and save ADC1 DR
-			"	strh r0, [%[ch1], r9, lsl #1]	\n\t"
-			"	ldr r0, [r1, #0x44C]			\n\t"	// get and save ADC2 DR
-			"	strh r0, [%[ch2], r9, lsl #1]	\n\t"
-
-			"	ldr r1, =0x40010800				\n\t"	// load GPIOA address
-			"	ldr r0, [r1, #0x08]				\n\t"	// get and save GPIOA IDR
-			"	strh r0, [%[dCH], r9, lsl #1]	\n\t"
-
-			"	adds r9, #1						\n\t"	// increment sIndex
-			"	cmp r9, %[nSamp]				\n\t"	// if(sIndex == NUM_SAMPLES)
-			"	bne notOverflowed_2				\n\t"
-			"	mov r9, #0						\n\t"	// sIndex = 0;
-
-			"	stmfd sp!,{r9, %[keepSampling], %[sIndex], %[triggered], %[ch1], %[ch2], %[dCH], %[lCtr]}	\n\t"
-			"	bl %[snapMicros]				\n\t"	// micros() - r0 contains the 32bit result
-			"	ldmfd sp!,{r9, %[keepSampling], %[sIndex], %[triggered], %[ch1], %[ch2], %[dCH], %[lCtr]}	\n\t"
-
-			"notOverflowed_2:					\n\t"
-			"	strh r9, [%[sIndex]]			\n\t"	// save sIndex
-
-			"	ldrb r0, [%[triggered]]			\n\t"	// if(triggered)
-			"	cbz r0, notTriggered_2			\n\t"
-
-			"	adds %[lCtr], #1				\n\t"	// lCtr++
-			"	cmp %[lCtr], %[halfSamples]		\n\t"	// if(lCtr == NUM_SAMPLES/2)
-			"	beq finished_2					\n\t"
-
-			"notTriggered_2:					\n\t"
-			"	b top_2							\n\t"
-			"finished_2:						\n\t"
-
-			: 
-			: [keepSampling] "r" (keepSamplingPtr), [sIndex] "r" (sIndexPtr), [triggered] "r" (triggeredPtr), 
-				[ch1] "r" (ch1Capture), [ch2] "r" (ch2Capture), [dCH] "r" (bitStore), [lCtr] "r" (lCtr),
-				[nSamp] "I" (NUM_SAMPLES), [halfSamples] "I" (NUM_SAMPLES/2),
-				[snapMicros] "i" (snapMicros)
-			: "r0", "r1", "r9", "memory", "cc"
-		);		
-		
-	}
-	else	{
-		
-		asm volatile(
-			"	ldrh r9, [%[sIndex]]			\n\t"	// load sIndex value
-
-			"top_3:								\n\t"
-			"	ldrb r0, [%[keepSampling]]		\n\t"	// while(keepSampling)
-			"	cbz r0, finished_3				\n\t"
-
-			"	ldr r1, =0x40012400				\n\t"	// load ADC1 base address, ADC2 = +0x400
-
-			"waitADC1_3:						\n\t"
-			"	ldr r0, [r1, #0]				\n\t"	// ADC1 SR
-			"	lsls r0, r0, #30				\n\t"	// get to EOC bit
-			"	bpl	waitADC1_3					\n\t"
-
-			"waitADC2_3:						\n\t"
-			"	ldr r0, [r1, #0x400]			\n\t"	// ADC2 SR
-			"	lsls r0, r0, #30				\n\t"	// get to EOC bit
-			"	bpl	waitADC2_3					\n\t"
-
-			"	ldr r0, [r1, #0x4C]				\n\t"	// get and save ADC1 DR
-			"	strh r0, [%[ch1], r9, lsl #1]	\n\t"
-			"	ldr r0, [r1, #0x44C]			\n\t"	// get and save ADC2 DR
-			"	strh r0, [%[ch2], r9, lsl #1]	\n\t"
-
-			"	ldr r1, =0x40010800				\n\t"	// load GPIOA address
-			"	ldr r0, [r1, #0x08]				\n\t"	// get and save GPIOA IDR
-			"	strh r0, [%[dCH], r9, lsl #1]	\n\t"
-
-			"	adds r9, #1						\n\t"	// increment sIndex
-			"	cmp r9, %[nSamp]				\n\t"	// if(sIndex == NUM_SAMPLES)
-			"	bne notOverflowed_3				\n\t"
-			"	mov r9, #0						\n\t"	// sIndex = 0;
-
-			"	stmfd sp!,{r9, %[keepSampling], %[sIndex], %[triggered], %[ch1], %[ch2], %[dCH], %[lCtr], %[tDelay]}	\n\t"
-			"	bl %[snapMicros]				\n\t"	// micros() - r0 contains the 32bit result
-			"	ldmfd sp!,{r9, %[keepSampling], %[sIndex], %[triggered], %[ch1], %[ch2], %[dCH], %[lCtr], %[tDelay]}	\n\t"
-
-			"notOverflowed_3:					\n\t"
-			"	strh r9, [%[sIndex]]			\n\t"	// save sIndex
-
-			"	ldrb r0, [%[triggered]]			\n\t"	// if(triggered)
-			"	cbz r0, notTriggered_3			\n\t"
-
-			"	adds %[lCtr], #1				\n\t"	// lCtr++
-			"	cmp %[lCtr], %[halfSamples]		\n\t"	// if(lCtr == NUM_SAMPLES/2)
-			"	beq finished_3					\n\t"
-
-			"notTriggered_3:					\n\t"
-			"	mov r0, %[tDelay]      			\n\t"	// inter sample delay
-			"1:           						\n\t"
-			"	subs r0, #1            			\n\t"
-			"	bhi 1b                 			\n\t"
-
-			"	b top_3							\n\t"
-			"finished_3:						\n\t"
-
-			: 
-			: [keepSampling] "r" (keepSamplingPtr), [sIndex] "r" (sIndexPtr), [triggered] "r" (triggeredPtr), 
-				[ch1] "r" (ch1Capture), [ch2] "r" (ch2Capture), [dCH] "r" (bitStore), [lCtr] "r" (lCtr),
-				[nSamp] "I" (NUM_SAMPLES), [halfSamples] "I" (NUM_SAMPLES/2), [tDelay] "r" (lDelay),
-				[snapMicros] "i" (snapMicros)
-			: "r0", "r1", "r9", "memory", "cc"
-		);		
-	
-	}
-#else
-    wrapper_sampling(lDelay);    
-#endif
-	
+// ------------------------
+void sampleWavesChunk(void) {
+// ------------------------
+    // This is a simplified version that samples a small chunk at a time
+    // We'll sample 32 points per call to keep it responsive
+    
+    if(!keepSampling || sIndex >= currentBufferSize) {
+        samplingState = SAMPLING_COMPLETE;
+        return;
+    }
+    
+    uint16_t chunkSize = 32;
+    uint16_t endIndex = sIndex + chunkSize;
+    if(endIndex > currentBufferSize) {
+        endIndex = currentBufferSize;
+    }
+    
+    // Sample a chunk of points
+    for(uint16_t i = sIndex; i < endIndex && keepSampling; i++) {
+        // Read ADC values
+        uint16_t adc1_val = adc_read(ADC1);
+        uint16_t adc2_val = adc_read(ADC2);
+        uint16_t digital_val = 0; // Read digital inputs if needed
+		if(digitalRead(DG_CH1) == HIGH) digital_val |= DIGITAL_D1_MASK;
+		if(digitalRead(DG_CH2) == HIGH) digital_val |= DIGITAL_D2_MASK;
+        
+        ch1Capture[i] = adc1_val;
+        ch2Capture[i] = adc2_val;
+        bitStore[i] = digital_val;
+        
+        // Check trigger condition
+        if(!triggered) {
+            int16_t triggerVal = adc1_val - zeroVoltageA1;
+            if(triggerRising) {
+                if(triggerVal > trigLevel) {  // Use trigLevel directly instead of getTriggerLevel()
+                    if(!minSamplesAcquired && (i < currentBufferSize/2)) {
+                        continue; // Skip trigger if min samples not acquired
+                    }
+                    triggered = true;
+                    tIndex = i;
+                }
+            } else {
+                if(triggerVal < trigLevel) {  // Use trigLevel directly
+                    if(!minSamplesAcquired && (i < currentBufferSize/2)) {
+                        continue;
+                    }
+                    triggered = true;
+                    tIndex = i;
+                }
+            }
+        }
+        
+        // Small delay for timing (adjust based on timebase)
+        delayMicroseconds(10);
+    }
+    
+    sIndex = endIndex;
+    
+    // Check if we've acquired minimum samples
+    if(sIndex >= currentBufferSize/2) {
+        minSamplesAcquired = true;
+    }
+    
+    // Check if sampling should stop
+    if(sIndex >= currentBufferSize || (triggered && sIndex >= tIndex + currentBufferSize/2)) {
+        samplingState = SAMPLING_COMPLETE;
+        samplingTime = micros() - prevTime;
+    }
 }
 
 
@@ -458,4 +433,23 @@ void printSample(uint16_t k, float timeStamp) {
 		DBG_PRINT("\t<--TRIG");
 	
 	DBG_PRINTLN();
+}
+
+// ------------------------
+void updateDirectDisplay(void) {
+// ------------------------
+    static unsigned long lastDisplayUpdate = 0;
+    
+    // XY mode uses timebase for timing
+    uint32_t updateInterval = xyMode ? 
+        map(currentTimeBase, T20US, T50MS, 10, 100) : 20;
+    
+    if(millis() - lastDisplayUpdate < updateInterval) return;
+    lastDisplayUpdate = millis();
+    
+    if(xyMode) {
+        drawXYWaveform(directSampleCount);
+    } else {
+        drawWaves();
+    }
 }

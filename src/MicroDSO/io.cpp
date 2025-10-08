@@ -42,9 +42,6 @@ void initIO(void)	{
 	pinMode(ENCODER_B, INPUT_PULLUP);
 	pinMode(BTN4, INPUT_PULLUP);
 	
-	attachInterrupt(ENCODER_SW, readESwitchISR, FALLING);
-	attachInterrupt(BTN4, btn4ISR, CHANGE);
-	
 #ifdef USE_ENCODER
 	attachInterrupt(ENCODER_A, readEncoderISR, CHANGE);
 	attachInterrupt(ENCODER_B, readEncoderISR, CHANGE);

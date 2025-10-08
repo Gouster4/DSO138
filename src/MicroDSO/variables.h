@@ -1,9 +1,15 @@
 #include "global.h"
 
+// Sampling states
+#define SAMPLING_IDLE       0
+#define SAMPLING_START      1
+#define SAMPLING_RUNNING    2
+#define SAMPLING_COMPLETE   3
+
 // global capture variables
-extern uint16_t ch1Capture[NUM_SAMPLES];
-extern uint16_t ch2Capture[NUM_SAMPLES];
-extern uint16_t bitStore[NUM_SAMPLES];
+extern uint16_t *ch1Capture;
+extern uint16_t *ch2Capture;
+extern uint16_t *bitStore;
 extern uint16_t sIndex;
 extern uint16_t tIndex;
 extern volatile bool triggered;
@@ -26,6 +32,7 @@ struct Stats {
 	float Vminf;
 };
 
+extern bool xyMode;
 extern Stats wStats;
 
 enum {CPL_GND, CPL_AC, CPL_DC};
@@ -43,3 +50,22 @@ extern int16_t zeroVoltageA1, zeroVoltageA2;
 enum {T20US, T30US, T50US, T0_1MS, T0_2MS, T0_5MS, T1MS, T2MS, T5MS, T10MS, T20MS, T50MS};
 extern const char* tbNames[]; 
 extern uint8_t currentTimeBase;
+extern uint8_t bufferMode;
+extern uint16_t currentBufferSize;
+extern const uint16_t bufferSizes[];
+
+// zoom control
+extern uint16_t zoomFactor;
+extern const char* bufferModeNames[];
+//XY mode
+extern uint16_t tailLength;  // Number of previous points to show
+extern bool tailEnabled;     // Enable/disable tail effect
+extern bool directSamplingMode;
+extern uint16_t directSampleCount;
+extern unsigned long lastDirectDrawTime;
+extern bool singleTriggerDone;
+extern bool paintLabels;
+extern bool samplingActive;
+extern uint8_t samplingState;
+extern bool xylines;
+extern uint8_t AN_SIGNAL1_R, AN_SIGNAL1_G, AN_SIGNAL1_B;

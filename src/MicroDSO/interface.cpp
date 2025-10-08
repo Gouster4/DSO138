@@ -76,30 +76,295 @@ void btn4ISR(void)	{
 
 
 // ------------------------
-void readESwitchISR(void)	{
+uint16_t calculateMaxZoomForBuffer(void) {
 // ------------------------
-	// debounce
-	if(millis() - lastBtnPress < BTN_DEBOUNCE_TIME)
-		return;
-	lastBtnPress = millis();
-
-	// select different parameters to change
-	focusNextLabel();
-	
-	// request repainting of screen labels
-	repaintLabels();
-	
-	// manually update display if frozen
-	if(hold)
-		drawWaves();
-	
-	if(triggerType != TRIGGER_AUTO)
-		// break the sampling loop
-		keepSampling = false;
+    // Calculate maximum zoom based on buffer capacity
+    float zoomMultiplier = (float)currentBufferSize / GRID_WIDTH;
+    uint16_t maxZoom = (uint16_t)(zoomMultiplier * 10);
+    
+    if(maxZoom > ZOOM_MAX) return ZOOM_MAX;
+    if(maxZoom < ZOOM_MIN) return ZOOM_MIN;
+    return maxZoom;
 }
 
+// ------------------------
+bool isZoomCompatibleWithBuffer(uint16_t zoom) {
+// ------------------------
+    float zoomMultiplier = zoom / 10.0;
+    uint16_t requiredSamples = (uint16_t)(GRID_WIDTH * zoomMultiplier);
+    return (requiredSamples <= currentBufferSize);
+}
 
+// ------------------------
+void incrementBufferSize(void) {
+// ------------------------
+    if(bufferMode > BUF_FULL) {
+        uint8_t newBufferMode = bufferMode - 1;
+        changeBufferSize(newBufferMode);
+    }
+}
 
+// ------------------------
+void decrementBufferSize(void) {
+// ------------------------
+    if(bufferMode < BUF_EIGHTH) {
+        uint8_t newBufferMode = bufferMode + 1;
+        changeBufferSize(newBufferMode);
+    }
+}
+
+// ------------------------
+void changeBufferSize(uint8_t newBufferMode) {
+// ------------------------
+    // Store current values
+    uint16_t oldZoom = zoomFactor;
+    uint16_t oldTail = tailLength;
+    
+    // Free existing buffers
+    if(ch1Capture) {
+        free(ch1Capture);
+        free(ch2Capture);
+        free(bitStore);
+        ch1Capture = ch2Capture = bitStore = NULL;
+    }
+    
+    // Set new buffer
+    bufferMode = newBufferMode;
+    currentBufferSize = bufferSizes[bufferMode];
+    
+    // Allocate new buffers
+    ch1Capture = (uint16_t*)malloc(currentBufferSize * sizeof(uint16_t));
+    ch2Capture = (uint16_t*)malloc(currentBufferSize * sizeof(uint16_t));
+    bitStore = (uint16_t*)malloc(currentBufferSize * sizeof(uint16_t));
+    
+    // Initialize buffers
+    if(ch1Capture && ch2Capture && bitStore) {
+        memset(ch1Capture, 0, currentBufferSize * sizeof(uint16_t));
+        memset(ch2Capture, 0, currentBufferSize * sizeof(uint16_t));
+        memset(bitStore, 0, currentBufferSize * sizeof(uint16_t));
+    } else {
+        // Fallback to full buffer
+        bufferMode = BUF_FULL;
+        currentBufferSize = NUM_SAMPLES;
+        // Re-allocate...
+    }
+    
+    // Reset sampling
+    sIndex = 0;
+    tIndex = 0;
+    triggered = false;
+    
+    // Adjust zoom if needed
+    uint16_t maxZoom = calculateMaxZoomForBuffer();
+    if(zoomFactor > maxZoom) {
+        zoomFactor = maxZoom;
+    }
+    
+	if(tailLength >= currentBufferSize) {
+    tailLength = currentBufferSize - 1;
+    saveParameter(PARAM_TAILLENGTH, tailLength);
+    }
+    // Adjust xCursor
+    adjustXCursorForZoom();
+    
+    saveParameter(PARAM_BUFSIZE, bufferMode);
+    saveParameter(PARAM_ZOOM, zoomFactor);
+    saveParameter(PARAM_TAILLENGTH, tailLength);
+    repaintLabels();
+}
+
+// ------------------------
+void initializeBuffers(void) {
+// ------------------------
+    // Allocate initial buffers
+    ch1Capture = (uint16_t*)malloc(currentBufferSize * sizeof(uint16_t));
+    ch2Capture = (uint16_t*)malloc(currentBufferSize * sizeof(uint16_t));
+    bitStore = (uint16_t*)malloc(currentBufferSize * sizeof(uint16_t));
+    
+    if(ch1Capture && ch2Capture && bitStore) {
+        memset(ch1Capture, 0, currentBufferSize * sizeof(uint16_t));
+        memset(ch2Capture, 0, currentBufferSize * sizeof(uint16_t));
+        memset(bitStore, 0, currentBufferSize * sizeof(uint16_t));
+        DBG_PRINT("Initial buffers allocated: ");
+        DBG_PRINT(currentBufferSize);
+        DBG_PRINTLN(" samples");
+    } else {
+        DBG_PRINTLN("CRITICAL: Initial buffer allocation failed!");
+    }
+}
+
+// ------------------------
+uint16_t calculateMaxTailForBuffer(void) {
+// ------------------------
+    // Maximum tail length is buffer size minus 1 (for current point)
+    return currentBufferSize - 1;
+}
+
+// ------------------------
+bool isTailCompatibleWithBuffer(uint16_t tail) {
+// ------------------------
+    return (tail <= currentBufferSize - 1);
+}
+
+// ------------------------
+void adjustZoomForBufferSize(void) {
+// ------------------------
+    // Calculate minimum zoom that can be displayed with current buffer
+    uint16_t minZoomForBuffer = calculateMinZoomForBuffer();
+    
+    if(zoomFactor < minZoomForBuffer) {
+        // Current zoom is too high for buffer, adjust to maximum possible
+        zoomFactor = minZoomForBuffer;
+        saveParameter(PARAM_ZOOM, zoomFactor);
+        adjustXCursorForZoom();
+    }
+}
+
+// ------------------------
+uint16_t calculateMinZoomForBuffer(void) {
+// ------------------------
+    // Returns the minimum zoom factor that can display the entire buffer
+    // We want at least GRID_WIDTH samples visible
+    if(currentBufferSize <= GRID_WIDTH) {
+        return 10; // 1.0x - can't zoom out further
+    }
+    
+    // Calculate the zoom needed to fit the buffer on screen
+    float requiredZoom = (float)GRID_WIDTH / currentBufferSize * 10.0;
+    uint16_t minZoom = (uint16_t)requiredZoom;
+    
+    // Ensure we don't go below minimum zoom
+    if(minZoom < ZOOM_MIN) {
+        return ZOOM_MIN;
+    }
+    
+    return minZoom;
+}
+
+// ------------------------
+void incrementZoom(void) {
+// ------------------------
+    // Store current center position
+    float zoomMultiplier = getZoomMultiplier();
+    uint16_t visibleSamples = (uint16_t)(GRID_WIDTH * zoomMultiplier);
+    uint16_t centerSample = xCursor + visibleSamples / 2;
+    
+    uint16_t newZoom = zoomFactor;
+    
+    if(zoomFactor < ZOOM_MAX) {
+        if(zoomFactor < 10) {
+            newZoom++;
+        } else {
+			newZoom= (newZoom/10)*10;
+            newZoom += 10;
+            if(newZoom > ZOOM_MAX) newZoom = ZOOM_MAX;
+        }
+        
+        // Check if zoom is compatible with current buffer
+        if(!isZoomCompatibleWithBuffer(newZoom)) {
+    // Try to automatically increase buffer size (go to LARGER buffer)
+    if(bufferMode > BUF_FULL) {  // If we're not at FULL (0) already
+	 uint16_t desiredZoom = newZoom;
+        incrementBufferSize();   // This will increase buffer size
+		zoomFactor = desiredZoom;
+        saveParameter(PARAM_ZOOM, zoomFactor);
+        adjustXCursorForZoom();
+        repaintLabels();
+        return;                  // Let buffer change handle zoom next time
+    } else {
+        // Already at maximum buffer, limit zoom
+        newZoom = calculateMaxZoomForBuffer();
+    }
+}
+        
+        if(newZoom != zoomFactor) {
+            zoomFactor = newZoom;
+            
+            // Adjust xCursor to maintain center position
+            float newZoomMultiplier = getZoomMultiplier();
+            uint16_t newVisibleSamples = (uint16_t)(GRID_WIDTH * newZoomMultiplier);
+            uint16_t newXCursor = centerSample - newVisibleSamples / 2;
+            
+            // Ensure xCursor stays within bounds
+            uint16_t maxXCursor = (currentBufferSize > newVisibleSamples) ? 
+                                 (currentBufferSize - newVisibleSamples) : 0;
+            if(newXCursor > maxXCursor) newXCursor = maxXCursor;
+            if((int16_t)newXCursor < 0) newXCursor = 0;
+            
+            xCursor = newXCursor;
+            
+            saveParameter(PARAM_ZOOM, zoomFactor);
+            saveParameter(PARAM_XCURSOR, xCursor);
+            repaintLabels();
+        }
+    }
+}
+
+// ------------------------
+void decrementZoom(void) {
+// ------------------------
+    // Store current center position
+    float zoomMultiplier = getZoomMultiplier();
+    uint16_t visibleSamples = (uint16_t)(GRID_WIDTH * zoomMultiplier);
+    uint16_t centerSample = xCursor + visibleSamples / 2;
+    
+    uint16_t newZoom = zoomFactor;
+    
+    if(zoomFactor > ZOOM_MIN) {
+        if(zoomFactor <= 10) {
+            newZoom--;
+        } else {
+			newZoom= (newZoom/10)*10;
+            newZoom -= 10;
+            if(newZoom < 10) newZoom = 10;
+        }
+        
+        // No automatic buffer decrease when zooming out
+        // Just apply the zoom change
+        if(newZoom != zoomFactor) {
+            zoomFactor = newZoom;
+            
+            // Adjust xCursor to maintain center position
+            float newZoomMultiplier = getZoomMultiplier();
+            uint16_t newVisibleSamples = (uint16_t)(GRID_WIDTH * newZoomMultiplier);
+            uint16_t newXCursor = centerSample - newVisibleSamples / 2;
+            
+            // Ensure xCursor stays within bounds
+            uint16_t maxXCursor = (currentBufferSize > newVisibleSamples) ? 
+                                 (currentBufferSize - newVisibleSamples) : 0;
+            if(newXCursor > maxXCursor) newXCursor = maxXCursor;
+            if((int16_t)newXCursor < 0) newXCursor = 0;
+            
+            xCursor = newXCursor;
+            
+            saveParameter(PARAM_ZOOM, zoomFactor);
+            saveParameter(PARAM_XCURSOR, xCursor);
+            repaintLabels();
+        }
+    }
+}
+
+// ------------------------
+void adjustXCursorForZoom(void) {
+// ------------------------
+    float zoomMultiplier = getZoomMultiplier();
+    uint16_t visibleSamples = (uint16_t)(GRID_WIDTH * zoomMultiplier);
+    uint16_t maxXCursor = (currentBufferSize > visibleSamples) ? 
+                         (currentBufferSize - visibleSamples) : 0;
+    
+    if(xCursor > maxXCursor) {
+        xCursor = maxXCursor;
+        saveParameter(PARAM_XCURSOR, xCursor);
+    }
+}
+
+// ------------------------
+float getZoomMultiplier(void) {
+// ------------------------
+    // Convert internal zoom factor to multiplier
+    // zoomFactor 10 = 1.0x, 20 = 2.0x, 5 = 0.5x, etc.
+    return zoomFactor / 10.0;
+}
 
 // ------------------------
 void resetParam(void)	{
@@ -111,6 +376,33 @@ void resetParam(void)	{
 			setTriggerLevel(0);
 			saveParameter(PARAM_TLEVEL, 0);
 			repaintLabels();
+			break;
+		case L_zoom:
+				{
+				// Store center position before reset
+				float zoomMultiplier = getZoomMultiplier();
+				uint16_t visibleSamples = (uint16_t)(GRID_WIDTH * zoomMultiplier);
+				uint16_t centerSample = xCursor + visibleSamples / 2;
+				
+				zoomFactor = ZOOM_DEFAULT;
+				
+				// Adjust xCursor to keep center position
+				float newZoomMultiplier = getZoomMultiplier();
+				uint16_t newVisibleSamples = (uint16_t)(GRID_WIDTH * newZoomMultiplier);
+				uint16_t newXCursor = centerSample - newVisibleSamples / 2;
+				
+				// Ensure xCursor stays within bounds
+				uint16_t maxXCursor = (currentBufferSize > newVisibleSamples) ? 
+									(currentBufferSize - newVisibleSamples) : 0;
+				if(newXCursor > maxXCursor) newXCursor = maxXCursor;
+				if(newXCursor < 0) newXCursor = 0;
+				
+				xCursor = newXCursor;
+				
+				saveParameter(PARAM_ZOOM, zoomFactor);
+				saveParameter(PARAM_XCURSOR, xCursor);
+				repaintLabels();
+				}
 			break;
 		case L_window:
 			// set x in the middle
@@ -133,9 +425,26 @@ void resetParam(void)	{
 			changeYCursor(3, -GRID_HEIGHT/2 - 1);
 			break;
 		case L_triggerType:
+			if(xyMode) {
+                // Reset tail length in XY mode
+                tailLength = DEFAULT_TAIL_LENGTH;
+                repaintLabels();
+            } else {
 			saveParameter(PARAM_PREAMBLE, PREAMBLE_VALUE, true); //salve parameters to flash
 			clearWaves();
+			}
 			break;
+		 case L_bufferSize:
+                // Reset to full buffer size
+                changeBufferSize(BUF_FULL);
+            break;
+		case L_triggerEdge:
+			if(xyMode) {
+			// Reset to dots mode in XY mode
+			xylines = false;
+			repaintLabels();
+			}
+		break;
 		default:
 			// toggle stats printing
 			printStats = !printStats;
@@ -203,6 +512,9 @@ void encoderChanged(int steps)	{
 		case L_triggerEdge:
 			if(steps > 0) setTriggerRising(); else setTriggerFalling();
 			break;
+		case L_bufferSize:  
+            if(steps > 0) incrementBufferSize(); else decrementBufferSize();
+			break;
 		case L_triggerLevel:
 			if(steps > 0) incrementTLevel(); else decrementTLevel();
 			break;
@@ -211,6 +523,9 @@ void encoderChanged(int steps)	{
 			break;
 		case L_window:
 			if(steps > 0) changeXCursor(xCursor + XCURSOR_STEP); else changeXCursor(xCursor - XCURSOR_STEP);
+			break;
+		case L_zoom:
+			if(steps > 0) incrementZoom(); else decrementZoom();
 			break;
 		case L_vPos1:
 			if(steps > 0) changeYCursor(0, yCursors[0] - YCURSOR_STEP); else changeYCursor(0, yCursors[0] + YCURSOR_STEP);
@@ -226,13 +541,15 @@ void encoderChanged(int steps)	{
 			break;
 	}
 	
-	// manually update display if frozen
-	if(hold)
+	// manually update display if frozen - BUT DON'T BREAK SAMPLING IN HOLD MODE
+	if(hold) {
 		drawWaves();
-	
-	if(triggerType != TRIGGER_AUTO)
-		// break the sampling loop
-		keepSampling = false;
+	} else {
+		// Only break sampling if not in hold mode and not auto trigger
+		if(triggerType != TRIGGER_AUTO) {
+			keepSampling = false;
+		}
+	}
 }
 
 
@@ -258,27 +575,41 @@ void decrementTLevel(void)	{
 }
 
 
+// ------------------------
 void incrementWaves(void) {
-    // Cycles through analog modes: A1+A2, A1, A2, none
-    // waves[0] = A1, waves[1] = A2
-    if (waves[0] && waves[1]) {
+// ------------------------
+    // Cycles through analog modes only: A1+A2, A1, A2, XY, none
+    if (waves[0] && waves[1] && !xyMode) {
         // Current state: A1 + A2 -> Next state: A1
         waves[1] = false;
+        setXYMode(false); // Ensure XY mode is off
         saveParameter(PARAM_WAVES + 1, waves[1]);
-    } else if (waves[0]) {
+    } else if (waves[0] && !waves[1]) {
         // Current state: A1 -> Next state: A2
         waves[0] = false;
         waves[1] = true;
+        setXYMode(false); // Ensure XY mode is off
         saveParameter(PARAM_WAVES + 0, waves[0]);
         saveParameter(PARAM_WAVES + 1, waves[1]);
-    } else if (waves[1]) {
-        // Current state: A2 -> Next state: none
+    } else if (!waves[0] && waves[1]) {
+        // Current state: A2 -> Next state: XY (A1+A2 with XY mode)
+        waves[0] = true;
+        waves[1] = true;
+        setXYMode(true); // Enable XY mode
+        saveParameter(PARAM_WAVES + 0, waves[0]);
+        saveParameter(PARAM_WAVES + 1, waves[1]);
+    } else if (waves[0] && waves[1] && xyMode) {
+        // Current state: XY -> Next state: none
+        waves[0] = false;
         waves[1] = false;
+        setXYMode(false); // Disable XY mode
+        saveParameter(PARAM_WAVES + 0, waves[0]);
         saveParameter(PARAM_WAVES + 1, waves[1]);
     } else {
         // Current state: none -> Next state: A1 + A2
         waves[0] = true;
         waves[1] = true;
+        setXYMode(false); // Ensure XY mode is off
         saveParameter(PARAM_WAVES + 0, waves[0]);
         saveParameter(PARAM_WAVES + 1, waves[1]);
     }
@@ -319,6 +650,11 @@ void decrementWaves(void) {
 // ------------------------
 void setTriggerRising(void)	{
 // ------------------------
+    if(xyMode) {
+        xylines=true;
+        repaintLabels();
+        return;
+    }
 	if(triggerRising)
 		return;
 	
@@ -333,6 +669,11 @@ void setTriggerRising(void)	{
 // ------------------------
 void setTriggerFalling(void)	{
 // ------------------------
+    if(xyMode) {
+        xylines=false;
+        repaintLabels();
+        return;
+    }
 	if(!triggerRising)
 		return;
 	
@@ -348,6 +689,33 @@ void setTriggerFalling(void)	{
 // ------------------------
 void incrementTT(void)	{
 // ------------------------
+if(xyMode) {
+    // In XY mode, timebase control adjusts tail length
+	tailLength = (tailLength/5)*5;
+	uint16_t newTail = tailLength + 5;
+    
+    // Check if tail is compatible with current buffer
+    if(!isTailCompatibleWithBuffer(newTail)) {
+        // Try to automatically increase buffer size
+        if(bufferMode > BUF_FULL) {  // If we can increase buffer size
+			uint16_t desiredTail = newTail;
+            incrementBufferSize();
+			setTailLength(desiredTail);
+			repaintLabels();
+            // Tail will be handled in the next encoder turn
+            return;
+        } else {
+            // Already at maximum buffer, limit tail
+            newTail = calculateMaxTailForBuffer();
+        }
+    }
+    
+    if(newTail != tailLength) {
+        setTailLength(newTail);
+    }
+    repaintLabels();
+    return;
+}
 	if(triggerType == TRIGGER_SINGLE)
 		return;
 	
@@ -362,6 +730,16 @@ void incrementTT(void)	{
 // ------------------------
 void decrementTT(void)	{
 // ------------------------
+	if(xyMode) {
+	tailLength = (tailLength/5)*5;
+    if(tailLength >= 5) {
+            setTailLength(tailLength - 5);
+        } else if(tailLength > 0) {
+            setTailLength(0);
+        }
+        repaintLabels();
+        return;
+    }
 	if(triggerType == TRIGGER_AUTO)
 		return;
 	setTriggerType(triggerType - 1);
@@ -376,21 +754,27 @@ void decrementTT(void)	{
 // ------------------------
 void incrementTimeBase(void)	{
 // ------------------------
-	if(currentTimeBase == T50MS)
-		return;
-	
-	setTimeBase(currentTimeBase + 1);
+    if(xyMode) {
+        if(currentTimeBase == T50MS) return;
+        setTimeBase(currentTimeBase + 1, true);
+        return;
+    }
+    if(currentTimeBase == T50MS) return;
+    setTimeBase(currentTimeBase + 1);
 }
 
 
 
 // ------------------------
 void decrementTimeBase(void)	{
-// ------------------------
-	if(currentTimeBase == T20US)
-		return;
-	
-	setTimeBase(currentTimeBase - 1);
+// ------------------------	
+    if(xyMode) {
+        if(currentTimeBase == T20US) return;
+        setTimeBase(currentTimeBase - 1, true);
+        return;
+    }
+    if(currentTimeBase == T20US) return;
+    setTimeBase(currentTimeBase - 1);
 }
 
 
@@ -437,13 +821,73 @@ void changeYCursor(uint8_t num, int16_t yPos)	{
 // ------------------------
 void changeXCursor(int16_t xPos)	{
 // ------------------------
-	if(xPos < 0)
-		xPos = 0;
-	
-	if(xPos > (NUM_SAMPLES - GRID_WIDTH))
-		xPos = NUM_SAMPLES - GRID_WIDTH;
-	
-	xCursor = xPos;
-	saveParameter(PARAM_XCURSOR, xCursor);
-	repaintLabels();
+    // Calculate maximum xCursor based on current buffer and zoom
+    float zoomMultiplier = getZoomMultiplier();
+    uint16_t visibleSamples = (uint16_t)(GRID_WIDTH * zoomMultiplier);
+    uint16_t maxXCursor = (currentBufferSize > visibleSamples) ? 
+                         (currentBufferSize - visibleSamples) : 0;
+    
+    if(xPos < 0)
+        xPos = 0;
+    
+    if(xPos > maxXCursor)
+        xPos = maxXCursor;
+    
+    xCursor = xPos;
+    saveParameter(PARAM_XCURSOR, xCursor);
+    repaintLabels();
+}
+
+
+// ------------------------
+void setTailLength(uint16_t length) {
+// ------------------------
+tailLength = constrain(length, 0, currentBufferSize - 1);
+    saveParameter(PARAM_TAILLENGTH, tailLength);
+    repaintLabels();
+}
+
+// ------------------------
+void clearXYBuffer() {
+// ------------------------
+    if(ch1Capture && ch2Capture) {
+        // Fill with center values (zero position)
+        int16_t centerValue = ADC_MAX_VAL / 2;
+        for(uint16_t i = 0; i < currentBufferSize; i++) {
+            ch1Capture[i] = centerValue;
+            ch2Capture[i] = centerValue;
+        }
+    }
+}
+
+// ------------------------
+void setXYMode(bool enable) {
+// ------------------------
+    xyMode = enable;
+    
+    if(xyMode) {
+        // Force direct sampling mode for XY
+        directSamplingMode = true;
+        // Reset sampling state
+        directSampleCount = 0;
+        lastDirectDrawTime = 0;
+        // Ensure both analog channels are enabled
+        waves[0] = true;
+        waves[1] = true;
+        saveParameter(PARAM_WAVES + 0, waves[0]);
+        saveParameter(PARAM_WAVES + 1, waves[1]);
+    } else {
+        // Return to normal sampling mode
+        directSamplingMode = false;
+    }
+    
+    saveParameter(PARAM_XYMODE, xyMode);
+    repaintLabels();
+}
+// ------------------------
+void setDirectSampling(bool enable) {
+// ------------------------
+    directSamplingMode = enable;
+    // Could be used for other real-time modes in the future
+    repaintLabels();
 }

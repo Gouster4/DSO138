@@ -1,6 +1,6 @@
 
-#define FIRMWARE_VERSION  "2025-09"
-
+#define FIRMWARE_VERSION  "2025-10"
+#define PROJECT_URL "http://techax.sk/dso138/"
 // coment out to disable debug
 #define HWDEBUG 1
 
@@ -15,13 +15,20 @@
 #define SERIAL_BAUD_RATE	115200
 
 // analog and digital samples storage depth
-#define NUM_SAMPLES 	2048	
-
+#define NUM_SAMPLES       2048
+#define NUM_SAMPLES_HALF  1024
+#define NUM_SAMPLES_QUARTER 512
+#define NUM_SAMPLES_EIGHTH  256
+enum {BUF_FULL, BUF_HALF, BUF_QUARTER, BUF_EIGHTH};
+enum {WAVES_A1A2, WAVES_A1, WAVES_A2, WAVES_XY, WAVES_NONE};
 // display colours
 #define AN_SIGNAL1 		ILI9341_BLUE
 #define AN_SIGNAL2 		ILI9341_GREEN
+#define AN_SIGNALX 		ILI9341_CYAN
 #define DG_SIGNAL1 		ILI9341_MAGENTA
 #define DG_SIGNAL2 		ILI9341_RED
+// XY mode tail length
+#define DEFAULT_TAIL_LENGTH 50 
 
 // pin definitions (DSO138)
 #define BOARD_LED 	PA15
@@ -71,9 +78,20 @@
 #define PARAM_STATS		14
 #define PARAM_ZERO1		15
 #define PARAM_ZERO2		16
+#define PARAM_BUFSIZE	17
+#define PARAM_ZOOM		18
+#define PARAM_XYMODE 	19
+#define PARAM_TAILLENGTH 20
+#define PARAM_XYLINES   21 
 
 #define LED_ON	digitalWrite(BOARD_LED, LOW)
 #define LED_OFF	digitalWrite(BOARD_LED, HIGH)
+
+//zoom
+
+#define ZOOM_MIN 1       // 0.1x
+#define ZOOM_MAX 100     // 10x
+#define ZOOM_DEFAULT 10  // 1x
 
 // number of pixels waveform moves left/right or up/down
 #define XCURSOR_STEP	25
@@ -81,3 +99,12 @@
 
 
 #define BTN_DEBOUNCE_TIME	350
+
+#define RGB_R(color16) (((color16) >> 11) & 0x1F)
+#define RGB_G(color16) (((color16) >> 5) & 0x3F) 
+#define RGB_B(color16) ((color16) & 0x1F)
+
+// Convert 5-6-5 RGB to 8-8-8 (for calculations)
+#define RGB16_TO_R8(color16) (RGB_R(color16) * 255 / 31)
+#define RGB16_TO_G8(color16) (RGB_G(color16) * 255 / 63)
+#define RGB16_TO_B8(color16) (RGB_B(color16) * 255 / 31)
