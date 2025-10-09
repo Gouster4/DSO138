@@ -41,8 +41,12 @@ void loadConfig(bool reset)	{
 	data = EEPROM.read(PARAM_TIMEBASE);
 	setTimeBase(data, false);
 	
-	// trigger type is not persisted
-	setTriggerType(TRIGGER_AUTO);
+	data = EEPROM.read(PARAM_TRIGTYPE);
+	if(data <= TRIGGER_SINGLE) {
+		setTriggerType(data);
+	} else {
+		setTriggerType(TRIGGER_AUTO); // Default if invalid
+	}
 
 	data = EEPROM.read(PARAM_TRIGDIR);
 	setTriggerRising(data == 1);
@@ -74,8 +78,15 @@ void loadConfig(bool reset)	{
 	data = EEPROM.read(PARAM_WAVES + 3);
 	waves[3] = data;
 	
-	data = EEPROM.read(PARAM_XYMODE);
-	xyMode = data;
+	data = EEPROM.read(PARAM_OPERATION_MODE);
+	if(data <= MODE_XY) {
+		operationMode = data;
+	} else {
+		operationMode = MODE_OSCILLOSCOPE;
+	}
+
+	// Apply mode-specific settings
+	setOperationMode(operationMode);  // This will initialize properly
 	
 	data = EEPROM.read(PARAM_TLEVEL);
 	setTriggerLevel(data);
@@ -188,6 +199,7 @@ void loadDefaults(void)	{
 	zeroVoltageA2 = 1985;
 	bufferMode = BUF_FULL;
 	currentBufferSize = NUM_SAMPLES;
+	operationMode = MODE_OSCILLOSCOPE;
 	zoomFactor = ZOOM_DEFAULT;
 	tailLength = DEFAULT_TAIL_LENGTH;
 	xylines = false;
@@ -205,6 +217,7 @@ void formatSaveConfig(void)	{
 	saveParameter(PARAM_PREAMBLE, PREAMBLE_VALUE, false);
 	
 	saveParameter(PARAM_TIMEBASE, currentTimeBase, false);
+	saveParameter(PARAM_TRIGTYPE, triggerType, false);
 	saveParameter(PARAM_TRIGDIR, triggerRising, false);
 	saveParameter(PARAM_XCURSOR, xCursor, false);
 	saveParameter(PARAM_YCURSOR, yCursors[0], false);
@@ -217,7 +230,7 @@ void formatSaveConfig(void)	{
 	saveParameter(PARAM_WAVES + 2, waves[2], false);
 	saveParameter(PARAM_WAVES + 3, waves[3], false);
 	
-	saveParameter(PARAM_XYMODE, xyMode, false);
+	saveParameter(PARAM_OPERATION_MODE, operationMode, false);
 	
 	saveParameter(PARAM_TLEVEL, getTriggerLevel(), false);
  	saveParameter(PARAM_STATS, printStats, false);

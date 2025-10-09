@@ -405,8 +405,23 @@ void resetParam(void)	{
 				}
 			break;
 		case L_window:
-			// set x in the middle
-			changeXCursor((NUM_SAMPLES - GRID_WIDTH)/2);
+			// set x in the middle based on current buffer size and zoom
+			{
+				float zoomMultiplier = getZoomMultiplier();
+				uint16_t visibleSamples = (uint16_t)(GRID_WIDTH * zoomMultiplier);
+        
+				// Ensure visible samples doesn't exceed buffer size
+				if(visibleSamples > currentBufferSize) {
+					visibleSamples = currentBufferSize;
+				}
+        
+				// Calculate maximum xCursor position
+				uint16_t maxXCursor = (currentBufferSize > visibleSamples) ? 
+				(currentBufferSize - visibleSamples) : 0;
+        
+			// Center the view in the available range
+			changeXCursor(maxXCursor / 2);
+			}
 			break;
 		case L_vPos1:
 			// zero the trace base
@@ -425,26 +440,27 @@ void resetParam(void)	{
 			changeYCursor(3, -GRID_HEIGHT/2 - 1);
 			break;
 		case L_triggerType:
-			if(xyMode) {
+			if(operationMode == MODE_XY) {
                 // Reset tail length in XY mode
                 tailLength = DEFAULT_TAIL_LENGTH;
                 repaintLabels();
             } else {
-			saveParameter(PARAM_PREAMBLE, PREAMBLE_VALUE, true); //salve parameters to flash
-			clearWaves();
+				// Reset tail length in XY mode
+				triggerType=TRIGGER_AUTO;
+				saveParameter(PARAM_TRIGTYPE, triggerType);
 			}
 			break;
 		 case L_bufferSize:
-                // Reset to full buffer size
-                changeBufferSize(BUF_FULL);
-            break;
+				saveParameter(PARAM_PREAMBLE, PREAMBLE_VALUE, true); //salve parameters to flash
+				clearWaves();
+			break;
 		case L_triggerEdge:
-			if(xyMode) {
+			if(operationMode == MODE_XY) {
 			// Reset to dots mode in XY mode
 			xylines = false;
 			repaintLabels();
 			}
-		break;
+			break;
 		default:
 			// toggle stats printing
 			printStats = !printStats;
@@ -579,42 +595,36 @@ void decrementTLevel(void)	{
 void incrementWaves(void) {
 // ------------------------
     // Cycles through analog modes only: A1+A2, A1, A2, XY, none
-    if (waves[0] && waves[1] && !xyMode) {
-        // Current state: A1 + A2 -> Next state: A1
-        waves[1] = false;
-        setXYMode(false); // Ensure XY mode is off
-        saveParameter(PARAM_WAVES + 1, waves[1]);
-    } else if (waves[0] && !waves[1]) {
-        // Current state: A1 -> Next state: A2
-        waves[0] = false;
-        waves[1] = true;
-        setXYMode(false); // Ensure XY mode is off
-        saveParameter(PARAM_WAVES + 0, waves[0]);
-        saveParameter(PARAM_WAVES + 1, waves[1]);
-    } else if (!waves[0] && waves[1]) {
-        // Current state: A2 -> Next state: XY (A1+A2 with XY mode)
-        waves[0] = true;
-        waves[1] = true;
-        setXYMode(true); // Enable XY mode
-        saveParameter(PARAM_WAVES + 0, waves[0]);
-        saveParameter(PARAM_WAVES + 1, waves[1]);
-    } else if (waves[0] && waves[1] && xyMode) {
-        // Current state: XY -> Next state: none
-        waves[0] = false;
-        waves[1] = false;
-        setXYMode(false); // Disable XY mode
-        saveParameter(PARAM_WAVES + 0, waves[0]);
-        saveParameter(PARAM_WAVES + 1, waves[1]);
-    } else {
-        // Current state: none -> Next state: A1 + A2
-        waves[0] = true;
-        waves[1] = true;
-        setXYMode(false); // Ensure XY mode is off
-        saveParameter(PARAM_WAVES + 0, waves[0]);
-        saveParameter(PARAM_WAVES + 1, waves[1]);
-    }
-
-    repaintLabels();
+	if (operationMode == MODE_OSCILLOSCOPE) {
+		if (waves[0] && waves[1]) {
+			// Current: A1+A2 -> Next: A1 only
+			waves[1] = false;
+			saveParameter(PARAM_WAVES + 1, waves[1]);
+		} else if (waves[0] && !waves[1]) {
+			// Current: A1 -> Next: A2 only  
+			waves[0] = false;
+			waves[1] = true;
+			saveParameter(PARAM_WAVES + 0, waves[0]);
+			saveParameter(PARAM_WAVES + 1, waves[1]);
+		} else if (!waves[0] && waves[1]) {
+			// Current: A2 -> Next: XY mode
+			setOperationMode(MODE_XY);
+		} else {
+			// Current: none -> Next: A1+A2
+			waves[0] = true;
+			waves[1] = true;
+			saveParameter(PARAM_WAVES + 0, waves[0]);
+			saveParameter(PARAM_WAVES + 1, waves[1]);
+		}
+	} else if (operationMode == MODE_XY) {
+		// Current: XY mode -> Next: none
+		waves[0] = false;
+		waves[1] = false;
+		setOperationMode(MODE_OSCILLOSCOPE);
+		saveParameter(PARAM_WAVES + 0, waves[0]);
+		saveParameter(PARAM_WAVES + 1, waves[1]);
+		}
+	repaintLabels();
 }
 
 // ------------------------
@@ -650,8 +660,9 @@ void decrementWaves(void) {
 // ------------------------
 void setTriggerRising(void)	{
 // ------------------------
-    if(xyMode) {
+    if(operationMode == MODE_XY) {
         xylines=true;
+		saveParameter(PARAM_XYLINES, xylines);
         repaintLabels();
         return;
     }
@@ -669,8 +680,9 @@ void setTriggerRising(void)	{
 // ------------------------
 void setTriggerFalling(void)	{
 // ------------------------
-    if(xyMode) {
+    if(operationMode == MODE_XY) {
         xylines=false;
+		saveParameter(PARAM_XYLINES, xylines);
         repaintLabels();
         return;
     }
@@ -689,7 +701,7 @@ void setTriggerFalling(void)	{
 // ------------------------
 void incrementTT(void)	{
 // ------------------------
-if(xyMode) {
+if(operationMode == MODE_XY) {
     // In XY mode, timebase control adjusts tail length
 	tailLength = (tailLength/5)*5;
 	uint16_t newTail = tailLength + 5;
@@ -720,8 +732,7 @@ if(xyMode) {
 		return;
 	
 	setTriggerType(triggerType + 1);
-	// trigger type is not saved
-	// saveParameter(PARAM_TRIGTYPE, triggerType);
+	saveParameter(PARAM_TRIGTYPE, triggerType);
 	repaintLabels();
 }
 
@@ -730,7 +741,7 @@ if(xyMode) {
 // ------------------------
 void decrementTT(void)	{
 // ------------------------
-	if(xyMode) {
+	if(operationMode == MODE_XY) {
 	tailLength = (tailLength/5)*5;
     if(tailLength >= 5) {
             setTailLength(tailLength - 5);
@@ -743,8 +754,7 @@ void decrementTT(void)	{
 	if(triggerType == TRIGGER_AUTO)
 		return;
 	setTriggerType(triggerType - 1);
-	// trigger type is not saved
-	// saveParameter(PARAM_TRIGTYPE, triggerType);
+	saveParameter(PARAM_TRIGTYPE, triggerType);
 	repaintLabels();
 }
 
@@ -754,7 +764,7 @@ void decrementTT(void)	{
 // ------------------------
 void incrementTimeBase(void)	{
 // ------------------------
-    if(xyMode) {
+    if(operationMode == MODE_XY) {
         if(currentTimeBase == T50MS) return;
         setTimeBase(currentTimeBase + 1, true);
         return;
@@ -768,7 +778,7 @@ void incrementTimeBase(void)	{
 // ------------------------
 void decrementTimeBase(void)	{
 // ------------------------	
-    if(xyMode) {
+    if(operationMode == MODE_XY) {
         if(currentTimeBase == T20US) return;
         setTimeBase(currentTimeBase - 1, true);
         return;
@@ -860,28 +870,39 @@ void clearXYBuffer() {
     }
 }
 
-// ------------------------
-void setXYMode(bool enable) {
-// ------------------------
-    xyMode = enable;
+void setOperationMode(uint8_t newMode) {
+    uint8_t oldMode = operationMode;
+    operationMode = newMode;
     
-    if(xyMode) {
-        // Force direct sampling mode for XY
-        directSamplingMode = true;
-        // Reset sampling state
-        directSampleCount = 0;
-        lastDirectDrawTime = 0;
-        // Ensure both analog channels are enabled
-        waves[0] = true;
-        waves[1] = true;
-        saveParameter(PARAM_WAVES + 0, waves[0]);
-        saveParameter(PARAM_WAVES + 1, waves[1]);
-    } else {
-        // Return to normal sampling mode
-        directSamplingMode = false;
+    // Mode-specific initialization
+    switch(newMode) {
+        case MODE_OSCILLOSCOPE:
+            // Normal oscilloscope mode
+            directSamplingMode = false;
+            // Ensure proper channel states
+            waves[0] = true;  // Keep A1 enabled by default
+            waves[1] = true;  // Keep A2 enabled by default  
+            break;
+            
+        case MODE_XY:
+            // XY mode initialization
+            directSamplingMode = true;
+            // Reset sampling state
+            directSampleCount = 0;
+            lastDirectDrawTime = 0;
+            // Force both analog channels enabled
+            waves[0] = true;
+            waves[1] = true;
+            waves[2] = false; // Disable digital in XY
+            waves[3] = false;
+            break;
     }
     
-    saveParameter(PARAM_XYMODE, xyMode);
+    // Save if mode actually changed
+    if(oldMode != operationMode) {
+        saveParameter(PARAM_OPERATION_MODE, operationMode);
+    }
+    
     repaintLabels();
 }
 // ------------------------

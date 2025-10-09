@@ -1,4 +1,5 @@
 
+#ifndef __EEPROM_H
 #define FIRMWARE_VERSION  "2025-10"
 #define PROJECT_URL "http://techax.sk/dso138/"
 // coment out to disable debug
@@ -66,24 +67,6 @@ enum {WAVES_A1A2, WAVES_A1, WAVES_A2, WAVES_XY, WAVES_NONE};
 // TFT_CS         PC13
 // TFT_RST        PB11
 
-// FLASH memory address defines
-#define PARAM_PREAMBLE	0
-#define PARAM_TIMEBASE	1
-#define PARAM_TRIGTYPE	2
-#define PARAM_TRIGDIR	3
-#define PARAM_XCURSOR	4
-#define PARAM_YCURSOR	5	// 5,6,7,8 - 4 params
-#define PARAM_WAVES		9	// 9,10,11,12 - 4 params
-#define PARAM_TLEVEL	13
-#define PARAM_STATS		14
-#define PARAM_ZERO1		15
-#define PARAM_ZERO2		16
-#define PARAM_BUFSIZE	17
-#define PARAM_ZOOM		18
-#define PARAM_XYMODE 	19
-#define PARAM_TAILLENGTH 20
-#define PARAM_XYLINES   21 
-
 #define LED_ON	digitalWrite(BOARD_LED, LOW)
 #define LED_OFF	digitalWrite(BOARD_LED, HIGH)
 
@@ -108,3 +91,23 @@ enum {WAVES_A1A2, WAVES_A1, WAVES_A2, WAVES_XY, WAVES_NONE};
 #define RGB16_TO_R8(color16) (RGB_R(color16) * 255 / 31)
 #define RGB16_TO_G8(color16) (RGB_G(color16) * 255 / 63)
 #define RGB16_TO_B8(color16) (RGB_B(color16) * 255 / 31)
+// FLASH memory address defines
+#define PARAM_PREAMBLE	0
+#define PARAM_TIMEBASE	1
+#define PARAM_TRIGTYPE	2
+#define PARAM_TRIGDIR	3
+#define PARAM_XCURSOR	4
+#define PARAM_YCURSOR	5	// 5,6,7,8 - 4 params
+#define PARAM_WAVES		9	// 9,10,11,12 - 4 params
+#define PARAM_TLEVEL	13
+#define PARAM_STATS		14
+#define PARAM_ZERO1		15
+#define PARAM_ZERO2		16
+#define PARAM_BUFSIZE	17
+#define PARAM_ZOOM		18
+#define PARAM_OPERATION_MODE 	19
+#define PARAM_TAILLENGTH 20
+#define PARAM_XYLINES   21 
+#else
+#define EESIZE 32   //FLASH memory address lenght
+#endif

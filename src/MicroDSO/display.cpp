@@ -54,7 +54,7 @@ void focusNextLabel(void)	{
 // ------------------------
 	currentFocus++;
 
-  if(xyMode) {
+  if(operationMode == MODE_XY) {
 		// Skip controls that are hidden in XY mode
 		if(currentFocus == L_zoom || 
 		   currentFocus == L_window || 
@@ -214,7 +214,7 @@ void clearNDrawSignals(void)	{
 	wavesSnap[1] = waves[1];
 	wavesSnap[2] = waves[2];
 	wavesSnap[3] = waves[3];
-	bool xyModeSnap = xyMode;
+	bool xyModeSnap = (operationMode == MODE_XY);
 
 	// Calculate visible samples based on zoom
 	float zoomMultiplier = zoomFactor / 10.0f;
@@ -573,7 +573,7 @@ void drawLabels(void)	{
 	 	tft.drawRect(45, 0, 35, vOffset, ILI9341_WHITE);
 	
 	tft.setTextColor(ILI9341_GREEN, ILI9341_BLACK);
-	if(!xyMode) {
+	if(!operationMode == MODE_XY) {
 		//zoom
 		tft.print("x");
 	
@@ -590,7 +590,7 @@ void drawLabels(void)	{
 
 	// draw x-window at top, range = 200px
 	// -----------------
-	if(!xyMode) {
+	if(!operationMode == MODE_XY) {
 		int sampleSizePx = 160;
 		float lOffset = (TFT_WIDTH - sampleSizePx)/2;
 		tft.drawFastVLine(lOffset, 3, vOffset - 6, ILI9341_GREEN);
@@ -626,7 +626,7 @@ void drawLabels(void)	{
 	// print active wave indicators
 	// -----------------
 	tft.setCursor(250, 4);
-	if(xyMode) {
+	if(operationMode == MODE_XY) {
 			// XY mode - show with dark grey background ONLY on the indicator
 			tft.setTextColor(AN_SIGNALX, ILI9341_BLACK);
 			tft.print("X-Y mode");
@@ -668,7 +668,7 @@ void drawLabels(void)	{
 	
 	// draw new wave cursors
 	// -----------------
-	if(!xyMode) {
+	if(!operationMode == MODE_XY) {
 		if(waves[3])
 			drawVCursor(3, DG_SIGNAL2, (currentFocus == L_vPos4));
 		if(waves[2])
@@ -705,7 +705,7 @@ void drawLabels(void)	{
 	if(currentFocus == L_triggerType)
 		tft.drawRect(225, GRID_HEIGHT + vOffset, 35, vOffset, ILI9341_WHITE);
 	
-	if(xyMode) {
+	if(operationMode == MODE_XY) {
 		// Show tail length in XY mode
 		tft.print(tailLength);
 	} else {
@@ -724,7 +724,7 @@ void drawLabels(void)	{
 
 	int trigX = 270;
 
-	if(xyMode) {
+	if(operationMode == MODE_XY) {
 		// Show connection mode in XY mode
 			if(xylines) {
 				// Connected lines mode - show line
@@ -774,7 +774,7 @@ void drawLabels(void)	{
 	
 	// draw trigger level on right side
 	// -----------------
-	if(!xyMode) {
+	if(!operationMode == MODE_XY) {
 		int cPos = GRID_HEIGHT + vOffset + yCursors[0] - getTriggerLevel()/3;
 		tft.fillTriangle(TFT_WIDTH, cPos - 5, TFT_WIDTH - hOffset, cPos, TFT_WIDTH, cPos + 5, AN_SIGNAL1);
 		if(currentFocus == L_triggerLevel)
@@ -1690,7 +1690,7 @@ uint8_t getPointSizeFromDigital(uint16_t index) {
 void drawXYWaveform(uint16_t pointCount) {
 // ------------------------
 	static uint32_t lastXYDraw = 0;
-	uint32_t drawInterval = xyMode ? map(currentTimeBase, T20US, T50MS, 10, 50) : 20;
+	uint32_t drawInterval = (operationMode == MODE_XY) ? map(currentTimeBase, T20US, T50MS, 10, 50) : 20;
 	
 	if(millis() - lastXYDraw < drawInterval) return;
 	lastXYDraw = millis();

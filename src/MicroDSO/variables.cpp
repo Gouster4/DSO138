@@ -12,7 +12,7 @@ volatile bool triggered = false;
 volatile bool keepSampling = true;
 long samplingTime;
 volatile bool hold = false;
-bool xyMode = false;
+uint8_t operationMode = MODE_OSCILLOSCOPE;
 // waveform calculated statistics
 Stats wStats;
 

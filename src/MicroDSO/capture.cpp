@@ -185,7 +185,7 @@ void sampleSinglePoint(void) {
     if(millis() - lastDirectDrawTime >= 10) { // 10ms = 100Hz update
         lastDirectDrawTime = millis();
         
-        if(xyMode) {
+        if(operationMode == MODE_XY) {
             drawXYWaveform(directSampleCount);
         } else {
             drawWaves();
@@ -441,13 +441,13 @@ void updateDirectDisplay(void) {
     static unsigned long lastDisplayUpdate = 0;
     
     // XY mode uses timebase for timing
-    uint32_t updateInterval = xyMode ? 
-        map(currentTimeBase, T20US, T50MS, 10, 100) : 20;
+    uint32_t updateInterval = (operationMode == MODE_XY) ? 
+    map(currentTimeBase, T20US, T50MS, 10, 100) : 20;
     
     if(millis() - lastDisplayUpdate < updateInterval) return;
     lastDisplayUpdate = millis();
     
-    if(xyMode) {
+    if(operationMode == MODE_XY) {
         drawXYWaveform(directSampleCount);
     } else {
         drawWaves();
