@@ -895,8 +895,6 @@ void setOperationMode(uint8_t newMode) {
             // Force both analog channels enabled
             waves[0] = true;
             waves[1] = true;
-            waves[2] = false; // Disable digital in XY
-            waves[3] = false;
             break;
     }
     

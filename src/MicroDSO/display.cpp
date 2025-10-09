@@ -6,8 +6,8 @@
 #include "MicroDSO.h"
 #include "io.h"
 
-#define DIGITAL_D1_MASK 0x01  // Bit 0 for digital channel 1
-#define DIGITAL_D2_MASK 0x02  // Bit 1 for digital channel 2
+#define DIGITAL_D1_MASK 0x2000
+#define DIGITAL_D2_MASK 0x4000
 
 //#include <Adafruit_GFX.h>
 #include "../Adafruit_GFX_/Adafruit_GFX_.h"
@@ -1615,7 +1615,7 @@ uint16_t getXYColorForPoint(uint16_t index, uint8_t baseBrightness) {
 	 if(index >= currentBufferSize) return AN_SIGNALX; // Safety check
 	
 	// Get digital intensity for D2 (color modulation)
-	uint8_t d2Intensity = getDigitalIntensity(index, 1, 16); // Channel 1 (D2)
+	uint16_t d2Intensity = getDigitalIntensity(index, 1, 16); // Channel 1 (D2)
 	
 	// Full hue wheel based on D2 duty cycle
 	uint8_t r, g, b;
@@ -1654,7 +1654,7 @@ uint16_t getXYColorForPoint(uint16_t index, uint8_t baseBrightness) {
 uint16_t getDigitalIntensity(uint16_t currentIndex, uint8_t channel, uint8_t window) {
 // ------------------------
 	// channel: 0 for D1, 1 for D2
-	uint8_t digitalMask = (channel == 0) ? DIGITAL_D1_MASK : DIGITAL_D2_MASK;
+	uint16_t digitalMask = (channel == 0) ? DIGITAL_D1_MASK : DIGITAL_D2_MASK;
 	
 	// Calculate digital frequency/duty cycle intensity (0-255)
 	uint16_t startIdx = (currentIndex >= window) ? currentIndex - window : 0;
@@ -1680,7 +1680,7 @@ uint8_t getPointSizeFromDigital(uint16_t index) {
 	if(index >= currentBufferSize) return 2; // Safety check
 	
 	// Get digital intensity for D1 (point size)
-	uint8_t d1Intensity = getDigitalIntensity(index, 0, 16); // Channel 0 (D1)
+	uint16_t d1Intensity = getDigitalIntensity(index, 0, 16); // Channel 0 (D1)
 	
 	// Point size based on D1 duty cycle
 	if(d1Intensity > 192) return 1;	  // 75-100% duty - small point
