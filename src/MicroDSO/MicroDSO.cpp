@@ -39,7 +39,10 @@ void MicroDSO_Setup(void) {
     
     // Load config and continue as before...
     loadConfig(digitalRead(BTN4) == LOW);
-    
+	
+    if(operationMode == MODE_XY) {
+        setOperationMode(MODE_XY);
+    }
     if(!ch1Capture || !ch2Capture || !bitStore) {
         initializeBuffers();
     }
@@ -96,11 +99,12 @@ void MicroDSO_Loop(void) {
     readInpSwitches();
     
     // Handle mode transitions
-    if(xyMode != lastXYMode) {
-        clearWaves();
-        lastXYMode = xyMode;
-        if(samplingActive) {
-            stopSampling();
+    static uint8_t lastOperationMode = MODE_OSCILLOSCOPE;
+	if(operationMode != lastOperationMode) {
+		clearWaves();
+		lastOperationMode = operationMode;
+		if(samplingActive) {
+			stopSampling();
         }
     }
     

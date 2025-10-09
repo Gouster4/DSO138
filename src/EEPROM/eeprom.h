@@ -37,10 +37,9 @@ bool 	EE_Writes(uint16_t VirtualAddress,uint16_t HowMuchToWrite,uint32_t* Data);
 
 
 #define EEPROM_OK 1
-#define EESIZE 20   //size in word
 class EEPROM_
 {
-uint16_t eedata[EESIZE];
+uint16_t eedata[EESIZE+1];
 uint16_t eeaddr;  //in bytes
 public:
 bool init(void){
@@ -51,17 +50,17 @@ bool init(void){
 	eeaddr=0;
 
 	do{
-	ret = EE_Reads(eeaddr, EESIZE/2 ,(uint32_t*) &eedata);
-	eeaddr+=EESIZE*2;
+	ret = EE_Reads(eeaddr, (EESIZE+1)/2 ,(uint32_t*) &eedata);
+	eeaddr+=(EESIZE+1)*2;
 	if(eeaddr > 1024)ret=1;
 	}while((eedata[0] != 0xFFFF)&&(ret)&&(eeaddr < 1024));
-	eeaddr-=EESIZE*2;
+	eeaddr-=(EESIZE+1)*2;
 
 	if(ret)
 	{
 		if(eeaddr >0)
 		{
-		ret = EE_Reads((eeaddr-(EESIZE*2)), EESIZE/2 ,(uint32_t*) &eedata);
+		ret = EE_Reads((eeaddr-((EESIZE+1)*2)), (EESIZE+1)/2 ,(uint32_t*) &eedata);
 		}
     }
 	else
@@ -85,12 +84,12 @@ bool write(uint16_t addr, uint16_t data, bool flash_write= false)
 	 	 eedata[addr]=data;
 	 	 if(flash_write)
 	 	 {
-	 	   if((eeaddr+(EESIZE*2)) >= 1024)
+	 	   if((eeaddr+((EESIZE+1)*2)) >= 1024)
 	       {
 	 		 format();
 	 	   }
-		   bool ret = EE_Writes(eeaddr,EESIZE/2 ,(uint32_t*) &eedata);
-		   eeaddr+=EESIZE*2;
+		   bool ret = EE_Writes(eeaddr,(EESIZE+1)/2 ,(uint32_t*) &eedata);
+		   eeaddr+=(EESIZE+1)*2;
 		   return ret;
 	 	 }
 	 	 return true;

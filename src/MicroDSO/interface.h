@@ -20,8 +20,7 @@ void decrementZoom(void);
 float getZoomMultiplier(void);
 void adjustXCursorForZoom(void);
 void initializeBuffers(void);
-
-void setXYMode(bool enable);
+void setOperationMode(uint8_t newMode);
 void setTailLength(uint16_t length);
 void clearXYBuffer();
 void setDirectSampling(bool enable);

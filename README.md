@@ -66,7 +66,7 @@ Following changes can be applied selectively, to get maximum functionality from 
 	Long press OK button:
 	
 		Focus				Action
-		Trigger Type		Save configuration to EEPROM (FLASH emulated)
+		Buffer Size		Save configuration to EEPROM (FLASH emulated)
 		Trigger Level		Zero the trigger level to Analog channel 1
 		Wave X scrollbar	Center waveform on screen (at trigger point)
 		Wave Y cursor		Zero the cursor. If Analog CH1 coupling is GND, waveform reference base is set 
@@ -93,6 +93,8 @@ sudo apt-get install stm32flash
 
 Connect your TTL-UART-to-USB converter to the DSO138 and bridge jumpers J1 and J2 on the back of the PCB just like in the above manual.
 
+Or solder 10 kΩ resistor across JP2, and button on JP1 to have programming button which needs to be pressed while connecting DSO138 to power for programming mode.
+
 Unlock the flash of the STM32:
 ```
 sudo stm32flash /dev/ttyUSB0 -k -b 115200
@@ -107,6 +109,11 @@ sudo stm32flash /dev/ttyUSB0 -w binaries/DLO-138_switches_1.0.bin -b 115200
 
 Remove the solder bridges on J1 and J2 and enjoy the alternative firmware on your DSO138.
  		
+
+# TODO:
+Add Spectrum Analyzer mode
+
+Add support to PC protocols over UART (oscilloscope software on PC)
 
 # References
 DSO-138 - http://www.jyetech.com/Products/LcdScope/e138.php

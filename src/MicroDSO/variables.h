@@ -32,7 +32,10 @@ struct Stats {
 	float Vminf;
 };
 
-extern bool xyMode;
+extern uint8_t operationMode;
+#define MODE_OSCILLOSCOPE 0  // Default mode
+#define MODE_XY           1  // XY mode
+
 extern Stats wStats;
 
 enum {CPL_GND, CPL_AC, CPL_DC};
