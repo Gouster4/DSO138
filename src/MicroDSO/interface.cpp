@@ -608,6 +608,8 @@ void incrementWaves(void) {
 			saveParameter(PARAM_WAVES + 1, waves[1]);
 		} else if (!waves[0] && waves[1]) {
 			// Current: A2 -> Next: XY mode
+			waves[0] = false;
+			waves[0] = true;
 			setOperationMode(MODE_XY);
 		} else {
 			// Current: none -> Next: A1+A2
@@ -618,9 +620,9 @@ void incrementWaves(void) {
 		}
 	} else if (operationMode == MODE_XY) {
 		// Current: XY mode -> Next: none
+		setOperationMode(MODE_OSCILLOSCOPE);
 		waves[0] = false;
 		waves[1] = false;
-		setOperationMode(MODE_OSCILLOSCOPE);
 		saveParameter(PARAM_WAVES + 0, waves[0]);
 		saveParameter(PARAM_WAVES + 1, waves[1]);
 		}

@@ -845,15 +845,18 @@ void drawStats(void)	{
 		// Show info screen instead of frequency labels
 		tft.setTextColor(ILI9341_MAGENTA, ILI9341_BLACK);
 		tft.setCursor(15, 20);
+		tft.print("       ");
 		tft.print("DSO138");
 		
 		tft.setTextColor(ILI9341_GREEN, ILI9341_BLACK);
 		tft.setCursor(15, 30);
+		tft.print("       ");
 		tft.print("Firmware: ");
 		tft.print(FIRMWARE_VERSION);
 		
 		tft.setTextColor(ILI9341_BLUE, ILI9341_BLACK);
 		tft.setCursor(15, 40);
+		tft.print("       ");
 		tft.print(PROJECT_URL);
 	} else {
 		// Normal mode - show frequency labels
@@ -1648,7 +1651,7 @@ uint16_t getXYColorForPoint(uint16_t index, uint8_t baseBrightness) {
 }
 
 // ------------------------
-uint8_t getDigitalIntensity(uint16_t currentIndex, uint8_t channel, uint8_t window) {
+uint16_t getDigitalIntensity(uint16_t currentIndex, uint8_t channel, uint8_t window) {
 // ------------------------
 	// channel: 0 for D1, 1 for D2
 	uint8_t digitalMask = (channel == 0) ? DIGITAL_D1_MASK : DIGITAL_D2_MASK;

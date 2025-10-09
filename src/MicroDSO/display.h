@@ -48,7 +48,7 @@ void drawCompactVoltage(float volt, bool mvRange);
 void drawXYWaveform(uint16_t pointCount);
 void setDirectSampling(bool enable);
 void setXYMode(bool enable);
-uint8_t getDigitalIntensity(uint16_t currentIndex, uint8_t channel, uint8_t window);
+uint16_t getDigitalIntensity(uint16_t currentIndex, uint8_t channel, uint8_t window);
 uint8_t getPointSizeFromDigital(uint16_t index);
 uint16_t getXYColorForPoint(uint16_t index, uint8_t baseBrightness);
 #endif

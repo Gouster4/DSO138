@@ -15,6 +15,7 @@
 //#define   _EEPROM_F1_HIGH_DESTINY
 
 #define     _EEPROM_USE_FLASH_PAGE              127
+#include "src/MicroDSO/global.h"
 
 //Support individual Address write. This requires one Page of Ram for temporary storage...
 //#define INDIVIDUAL_ADDR_WRITE

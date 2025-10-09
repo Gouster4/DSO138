@@ -8,8 +8,8 @@
 #include "MicroDSO.h"
 #include "io.h"
  
-#define DIGITAL_D1_MASK 0x01  // Bit 0 for digital channel 1
-#define DIGITAL_D2_MASK 0x02  // Bit 1 for digital channel 2
+#define DIGITAL_D1_MASK 0x4000  // Bit 0 for digital channel 1
+#define DIGITAL_D2_MASK 0x2000  // Bit 1 for digital channel 2
 
 void triggerISR(void);
 void startScanTimeout(int16_t mSec);
