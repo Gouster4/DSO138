@@ -1,3 +1,6 @@
+#ifndef VARIABLES_H
+#define VARIABLES_H
+
 #include "global.h"
 
 // Sampling states
@@ -35,6 +38,7 @@ struct Stats {
 extern uint8_t operationMode;
 #define MODE_OSCILLOSCOPE 0  // Default mode
 #define MODE_XY           1  // XY mode
+#define MODE_SPECTRUM 2 // Spectrum Analyzer mode
 
 extern Stats wStats;
 
@@ -72,3 +76,15 @@ extern bool samplingActive;
 extern uint8_t samplingState;
 extern bool xylines;
 extern uint8_t AN_SIGNAL1_R, AN_SIGNAL1_G, AN_SIGNAL1_B;
+
+// Spectrum analyzer variables
+extern uint8_t spectrumWindow; // 0=Rectangular, 1=Hamming, 2=Hanning
+extern uint16_t spectrumBinCount;
+extern float* spectrumDataA1;
+extern float* spectrumDataA2;
+extern float* spectrumDataD1;
+extern float* spectrumDataD2;
+extern float spectrumMaxFreq;
+extern float spectrumDBRange;
+
+#endif

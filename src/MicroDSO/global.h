@@ -1,5 +1,6 @@
 
-#ifndef __EEPROM_H
+#ifndef GLOBAL_H
+#define GLOBAL_H
 #define FIRMWARE_VERSION  "2025-10"
 #define PROJECT_URL "http://techax.sk/dso138/"
 // coment out to disable debug
@@ -15,6 +16,9 @@
 
 #define SERIAL_BAUD_RATE	115200
 
+#define DIGITAL_D1_MASK 0x2000
+#define DIGITAL_D2_MASK 0x4000
+
 // analog and digital samples storage depth
 #define NUM_SAMPLES       2048
 #define NUM_SAMPLES_HALF  1024
@@ -26,6 +30,7 @@ enum {WAVES_A1A2, WAVES_A1, WAVES_A2, WAVES_XY, WAVES_NONE};
 #define AN_SIGNAL1 		ILI9341_BLUE
 #define AN_SIGNAL2 		ILI9341_GREEN
 #define AN_SIGNALX 		ILI9341_CYAN
+#define SP_SIGNAL 		ILI9341_MAGENTA
 #define DG_SIGNAL1 		ILI9341_MAGENTA
 #define DG_SIGNAL2 		ILI9341_RED
 // XY mode tail length
@@ -91,6 +96,15 @@ enum {WAVES_A1A2, WAVES_A1, WAVES_A2, WAVES_XY, WAVES_NONE};
 #define RGB16_TO_R8(color16) (RGB_R(color16) * 255 / 31)
 #define RGB16_TO_G8(color16) (RGB_G(color16) * 255 / 63)
 #define RGB16_TO_B8(color16) (RGB_B(color16) * 255 / 31)
+
+// Spectrum Analyzer
+#define SPECTRUM_BINS 512
+#define SPECTRUM_MAX_FREQ 50000  // 50kHz maximum frequency
+#define SPECTRUM_DB_RANGE 80.0   // 80dB dynamic range
+
+// Spectrum window types
+enum {WINDOW_RECTANGULAR, WINDOW_HAMMING, WINDOW_HANNING};
+
 // FLASH memory address defines
 #define PARAM_PREAMBLE	0
 #define PARAM_TIMEBASE	1
@@ -108,6 +122,5 @@ enum {WAVES_A1A2, WAVES_A1, WAVES_A2, WAVES_XY, WAVES_NONE};
 #define PARAM_OPERATION_MODE 	19
 #define PARAM_TAILLENGTH 20
 #define PARAM_XYLINES   21 
-#else
 #define EESIZE 32   //FLASH memory address lenght
 #endif

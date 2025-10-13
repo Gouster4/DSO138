@@ -5,9 +5,7 @@
 #include "capture.h" 
 #include "MicroDSO.h"
 #include "io.h"
-
-#define DIGITAL_D1_MASK 0x2000
-#define DIGITAL_D2_MASK 0x4000
+#include "spectrum.h"
 
 //#include <Adafruit_GFX.h>
 #include "../Adafruit_GFX_/Adafruit_GFX_.h"
@@ -67,6 +65,24 @@ void focusNextLabel(void)	{
 		}
 	}
 
+	else if(operationMode == MODE_SPECTRUM) {
+		// Skip controls that are hidden in Spectrum mode
+		if(currentFocus == L_timebase || 
+		   currentFocus == L_triggerType || 
+		   currentFocus == L_triggerEdge || 
+		   currentFocus == L_bufferSize || 
+		   currentFocus == L_triggerLevel || 
+		   currentFocus == L_window ||
+		   currentFocus == L_zoom || 
+		   currentFocus == L_vPos1 || 
+		   currentFocus == L_vPos2 || 
+		   currentFocus == L_vPos3 || 
+		   currentFocus == L_vPos4) {
+		   focusNextLabel();
+		}
+	}
+	
+	else {
 	if((currentFocus == L_vPos1) && !waves[0])
 		currentFocus++;
 
@@ -81,6 +97,7 @@ void focusNextLabel(void)	{
 
 	if(currentFocus > L_vPos4)
 		currentFocus = L_timebase;
+	}
 }
 
 
@@ -115,6 +132,11 @@ void initDisplay(void)	{
 // ------------------------
 void drawWaves(void)	{
 // ------------------------
+	if(operationMode == MODE_SPECTRUM) {
+        drawSpectrum();
+        return;
+    }
+	
 	static bool printStatsOld = false;
 
 	if(printStatsOld && !printStats)
@@ -143,15 +165,21 @@ void drawWaves(void)	{
 
 
 // ------------------------
-void clearWaves(void)	{
+void clearWaves(void) {
 // ------------------------
-	// clear screen
-	tft.fillScreen(ILI9341_BLACK);
-	// and paint o-scope
-	drawGrid();
-	drawLabels();
+    // clear screen
+    tft.fillScreen(ILI9341_BLACK);
+    
+    if(operationMode == MODE_OSCILLOSCOPE || operationMode == MODE_XY) {
+        drawGrid();
+        drawLabels();
+    }
+    // For spectrum mode, we'll draw everything in drawSpectrum()
+    else if(operationMode == MODE_SPECTRUM) {
+        // Spectrum mode will draw everything in drawSpectrum()
+        // Don't draw anything here to avoid conflicts
+    }
 }
-
 
 
 bool cDisplayed = false;
@@ -225,55 +253,46 @@ void clearNDrawSignals(void)	{
 		visibleSamples = currentBufferSize;
 	}
 
-	// Calculate step for zoom
-	float samplesPerPixel = (float)visibleSamples / GRID_WIDTH;
-	uint16_t step = (uint16_t)samplesPerPixel;
-	if(step < 1) step = 1;
+	    // Calculate visible range precisely
+    float samplesPerPixel = (float)visibleSamples / GRID_WIDTH;
 
-	// For zoom < 1x, we need to sample multiple points per pixel
-	bool zoomedOut = (zoomMultiplier < 1.0f);
+    // Adjust xCursor if it goes beyond valid range for current zoom
+    uint16_t maxXCursor = (currentBufferSize > visibleSamples) ? 
+                         (currentBufferSize - visibleSamples) : 0;
+    if(xCursorSnap > maxXCursor) {
+        xCursorSnap = maxXCursor;
+    }
 
-	// Adjust xCursor if it goes beyond valid range for current zoom
-	uint16_t maxXCursor = (currentBufferSize > visibleSamples) ? 
-						 (currentBufferSize - visibleSamples) : 0;
-	if(xCursorSnap > maxXCursor) {
-		xCursorSnap = maxXCursor;
+    // draw the visible section of the waveform from xCursorSnap
+    int16_t val1, val2;
+    int16_t transposedPt1, transposedPt2;
+    uint8_t shiftedVal;
+
+    // Calculate the actual start position in the buffer for display
+	// This handles the circular buffer correctly
+	uint16_t startPos = xCursorSnap;
+	if(sIndex > 0) {
+		// For triggered sampling, we need to handle the circular buffer properly
+		startPos = (sIndex + xCursorSnap) % currentBufferSize;
 	}
 
-	// draw the visible section of the waveform from xCursorSnap
-	int16_t val1, val2;
-	int16_t transposedPt1, transposedPt2;
-	uint8_t shiftedVal;
-
-	// sampling stopped at sIndex - 1
-	int j = sIndex + xCursorSnap;
-	if(j >= currentBufferSize)
-		j = j - currentBufferSize;
-	
 	// Clear only the waveform area (not the grid)
 	// We clear each segment individually as we draw to avoid clearing the grid
-	// go through all the visible data points with zoom step
+	// go through all the visible data points with consistent sampling
 	for(int i = 1; i < GRID_WIDTH - 1; i++) {
 		int sampleIndex1, sampleIndex2;
+
+		// Simple, consistent calculation - each pixel gets equal share of visible samples
+		float pixelPos1 = (float)i / GRID_WIDTH;
+		float pixelPos2 = (float)(i + 1) / GRID_WIDTH;
+    
+		sampleIndex1 = (startPos + (uint16_t)(pixelPos1 * visibleSamples)) % currentBufferSize;
+		sampleIndex2 = (startPos + (uint16_t)(pixelPos2 * visibleSamples)) % currentBufferSize;
 	
-		if(zoomedOut) {
-			// For zoom < 1x: use multiple samples per pixel
-			uint16_t startSample = j + (uint16_t)(i * samplesPerPixel);
-			uint16_t endSample = j + (uint16_t)((i + 1) * samplesPerPixel);
-		
-			if(startSample >= currentBufferSize) startSample -= currentBufferSize;
-			if(endSample >= currentBufferSize) endSample -= currentBufferSize;
-		
-			sampleIndex1 = startSample;
-			sampleIndex2 = endSample;
-		} else {
-			// For zoom >= 1x: normal sampling with step
-			sampleIndex1 = j + (i * step);
-			sampleIndex2 = j + ((i + 1) * step);
-			
-			if(sampleIndex1 >= currentBufferSize) sampleIndex1 -= currentBufferSize;
-			if(sampleIndex2 >= currentBufferSize) sampleIndex2 -= currentBufferSize;
-		}
+		// Safety check - ensure indices are within bounds
+		if(sampleIndex1 >= currentBufferSize) sampleIndex1 = currentBufferSize - 1;
+		if(sampleIndex2 >= currentBufferSize) sampleIndex2 = currentBufferSize - 1;
+	
 	
 		// erase old line segments if zoom changed
 		if(zoomOld != zoomSnap) {
@@ -544,11 +563,15 @@ void drawGrid(void)	{
 // ------------------------
 void drawLabels(void)	{
 // ------------------------
+	
 	// draw the static labels around the grid
 
 	// erase top bar
 	tft.fillRect(hOffset, 0, TFT_WIDTH, vOffset, ILI9341_BLACK);
-	tft.fillRect(hOffset + GRID_WIDTH, 0, hOffset, TFT_HEIGHT, ILI9341_BLACK);
+	
+	//erase right bar
+	if(operationMode != MODE_SPECTRUM)
+		tft.fillRect(hOffset + GRID_WIDTH, 0, hOffset, TFT_HEIGHT, ILI9341_BLACK);
 
 	// paint run/hold information
 	// -----------------
@@ -573,7 +596,7 @@ void drawLabels(void)	{
 	 	tft.drawRect(45, 0, 35, vOffset, ILI9341_WHITE);
 	
 	tft.setTextColor(ILI9341_GREEN, ILI9341_BLACK);
-	if(!operationMode == MODE_XY) {
+	if(operationMode == MODE_OSCILLOSCOPE) {
 		//zoom
 		tft.print("x");
 	
@@ -590,7 +613,7 @@ void drawLabels(void)	{
 
 	// draw x-window at top, range = 200px
 	// -----------------
-	if(!operationMode == MODE_XY) {
+	if(operationMode == MODE_OSCILLOSCOPE) {
 		int sampleSizePx = 160;
 		float lOffset = (TFT_WIDTH - sampleSizePx)/2;
 		tft.drawFastVLine(lOffset, 3, vOffset - 6, ILI9341_GREEN);
@@ -618,7 +641,7 @@ void drawLabels(void)	{
 		else
 			tft.fillRect(xCursorPx, 4, windowSize, vOffset - 8, ILI9341_GREEN);
 
-	} else {
+	} else if (operationMode == MODE_XY) {
 		// In XY mode, clear the area where scroll bar would be
 		tft.fillRect(0, 0, hOffset, vOffset, ILI9341_BLACK);
 	}
@@ -630,7 +653,11 @@ void drawLabels(void)	{
 			// XY mode - show with dark grey background ONLY on the indicator
 			tft.setTextColor(AN_SIGNALX, ILI9341_BLACK);
 			tft.print("X-Y mode");
-	} else {
+	} else if(operationMode == MODE_SPECTRUM) {
+			// XY mode - show with dark grey background ONLY on the indicator
+			tft.setTextColor(SP_SIGNAL, ILI9341_BLACK);
+			tft.print("Spectrum");
+	} else if(operationMode == MODE_OSCILLOSCOPE) {
 	
 		if(waves[0]) {
 			tft.setTextColor(AN_SIGNAL1, ILI9341_BLACK);
@@ -664,11 +691,12 @@ void drawLabels(void)	{
 	if(currentFocus == L_waves)
 		tft.drawRect(247, 0, 72, vOffset, ILI9341_WHITE);
 	// erase left side of grid
-	tft.fillRect(0, 0, hOffset, TFT_HEIGHT, ILI9341_BLACK);
+	if(operationMode != MODE_SPECTRUM)
+		tft.fillRect(0, 0, hOffset, TFT_HEIGHT, ILI9341_BLACK);
 	
 	// draw new wave cursors
 	// -----------------
-	if(!operationMode == MODE_XY) {
+	if(operationMode == MODE_OSCILLOSCOPE) {
 		if(waves[3])
 			drawVCursor(3, DG_SIGNAL2, (currentFocus == L_vPos4));
 		if(waves[2])
@@ -679,6 +707,8 @@ void drawLabels(void)	{
 			drawVCursor(0, AN_SIGNAL1, (currentFocus == L_vPos1));
 
 	}
+	
+	if(operationMode != MODE_SPECTRUM) {
 	// erase bottom bar
 	tft.fillRect(hOffset, GRID_HEIGHT + vOffset, TFT_WIDTH, vOffset, ILI9341_BLACK);
 
@@ -708,7 +738,7 @@ void drawLabels(void)	{
 	if(operationMode == MODE_XY) {
 		// Show tail length in XY mode
 		tft.print(tailLength);
-	} else {
+	} else if(operationMode == MODE_OSCILLOSCOPE) {
 		//draw trigger type in normal mode
 		switch(triggerType) {
 			case TRIGGER_AUTO: tft.print("AUTO"); break;
@@ -736,7 +766,7 @@ void drawLabels(void)	{
 				tft.drawPixel(trigX + 4, TFT_HEIGHT - 8, ILI9341_GREEN);
 				tft.drawPixel(trigX + 6, TFT_HEIGHT - 10, ILI9341_GREEN);
 			}
-	} else {
+	} else if(operationMode == MODE_OSCILLOSCOPE) {
 		// Show trigger edge in normal mode
 		if(triggerRising) {
 			tft.drawFastHLine(trigX, TFT_HEIGHT - 3, 5, ILI9341_GREEN);
@@ -774,7 +804,7 @@ void drawLabels(void)	{
 	
 	// draw trigger level on right side
 	// -----------------
-	if(!operationMode == MODE_XY) {
+	if(operationMode == MODE_OSCILLOSCOPE) {
 		int cPos = GRID_HEIGHT + vOffset + yCursors[0] - getTriggerLevel()/3;
 		tft.fillTriangle(TFT_WIDTH, cPos - 5, TFT_WIDTH - hOffset, cPos, TFT_WIDTH, cPos + 5, AN_SIGNAL1);
 		if(currentFocus == L_triggerLevel)
@@ -782,7 +812,7 @@ void drawLabels(void)	{
 	}
 }
 
-
+}
 // #define DRAW_TIMEBASE
 
 // ------------------------
@@ -1776,4 +1806,189 @@ void drawXYWaveform(uint16_t pointCount) {
 	}
 	// Highlight current point
 	tft.drawCircle(screenX, screenY, currentSize + 1, ILI9341_WHITE);
+}
+
+void drawSpectrum(void) {
+    static unsigned long lastSpectrumUpdate = 0;
+    static unsigned long lastFullDraw = 0;
+    
+    if(operationMode != MODE_SPECTRUM) return;
+    
+    // Only update spectrum analysis periodically (every 200ms)
+    if(millis() - lastSpectrumUpdate > 200) {
+        updateSpectrumAnalysis();
+        lastSpectrumUpdate = millis();
+    }
+    
+    // Only redraw the entire screen periodically (every 100ms) to reduce flicker
+    if(millis() - lastFullDraw > 100) {
+        
+        // CLEAR THE ENTIRE SCREEN
+        tft.fillScreen(ILI9341_BLACK);
+        
+        // Now draw the spectrum display from scratch
+        drawGrid();
+        
+		drawLabels();
+		drawSpectrumLabels();
+		
+        // Draw frequency axis labels
+        drawSpectrumAxisLabels();
+        
+        // Check if we have spectrum data
+        bool hasData = spectrumDataA1 || spectrumDataA2 || spectrumDataD1 || spectrumDataD2;
+        
+        if(!hasData) {
+            // No data yet, show message
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setCursor(100, GRID_HEIGHT/2 + vOffset);
+            tft.print("Acquiring data...");
+        } else {
+            // Draw all channel spectra - IN SPECTRUM MODE, SHOW ALL CHANNELS
+            
+            if(spectrumDataA1) {
+                drawChannelSpectrum(spectrumDataA1, AN_SIGNAL1, "A1");
+            }
+            if(spectrumDataA2) {
+                drawChannelSpectrum(spectrumDataA2, AN_SIGNAL2, "A2");
+            }
+            if(spectrumDataD1) {
+                drawChannelSpectrum(spectrumDataD1, DG_SIGNAL1, "D1");
+            }
+            if(spectrumDataD2) {
+                drawChannelSpectrum(spectrumDataD2, DG_SIGNAL2, "D2");
+            }
+        }
+        
+        lastFullDraw = millis();
+    }
+}
+
+void drawSimpleSpectrum(float* spectrum, uint16_t color) {
+    if(!spectrum) return;
+    
+    for(uint16_t i = 1; i < spectrumBinCount/4 && i < GRID_WIDTH; i++) {
+        float db = spectrum[i];
+        db = constrain(db, -spectrumDBRange, 0);
+        int16_t y = vOffset + GRID_HEIGHT - ((db + spectrumDBRange) * GRID_HEIGHT / spectrumDBRange);
+        y = constrain(y, vOffset, vOffset + GRID_HEIGHT);
+        
+        tft.drawPixel(hOffset + i, y, color);
+    }
+}
+
+void drawSpectrumAxisLabels(void) {
+    // Clear the bottom label area first
+    tft.fillRect(0, GRID_HEIGHT + vOffset, TFT_WIDTH, vOffset, ILI9341_BLACK);
+    
+    // Draw dB scale on left (0dB at top, -spectrumDBRange at bottom)
+    tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+    tft.setTextSize(1);
+    
+    // Draw dB markers
+    for(int db = 0; db <= spectrumDBRange; db += 20) {
+        // Calculate Y position: 0dB at top, -60dB at bottom
+        int y = vOffset + (db * GRID_HEIGHT / spectrumDBRange);
+        tft.setCursor(5, y - 4);
+        tft.print("-");
+        tft.print(db);
+        tft.print("dB");
+    }
+    
+    // Draw frequency scale on bottom
+    for(int freq = 0; freq <= spectrumMaxFreq; freq += spectrumMaxFreq/5) {
+        int x = hOffset + (freq * GRID_WIDTH / spectrumMaxFreq);
+        tft.setCursor(x - 15, GRID_HEIGHT + vOffset + 5);
+        if(freq < 1000) {
+            tft.print(freq);
+            tft.print("Hz");
+        } else {
+            tft.print(freq/1000);
+            tft.print("kHz");
+        }
+    }
+}
+
+
+void drawChannelSpectrum(float* spectrum, uint16_t color, const char* label) {
+    if(!spectrum) return;
+    
+    static uint8_t labelY = 5;
+    uint16_t labelYOffset = labelY;
+    labelY += 12;
+    if(labelY > 30) labelY = 5;
+    
+    // Draw channel label
+    tft.setTextColor(color, ILI9341_BLACK);
+    tft.setCursor(hOffset + 5, vOffset + labelYOffset);
+    tft.print(label);
+    
+    int16_t prevX = hOffset;
+    int16_t prevY = vOffset + GRID_HEIGHT; // Start at bottom (-60dB)
+    
+    // Draw the spectrum line
+    for(uint16_t i = 1; i < spectrumBinCount/4 && i < GRID_WIDTH; i++) {
+        // Convert frequency bin to x position
+        int16_t x = hOffset + (i * GRID_WIDTH) / (spectrumBinCount/4);
+        
+        // Get dB value
+        float db = spectrum[i];
+        
+        // SIMPLE, FOOLPROOF Y-AXIS CALCULATION:
+        // We have dB range: 0dB (max) to -60dB (min)
+        // We want: 0dB -> top of grid (vOffset)
+        //         -60dB -> bottom of grid (vOffset + GRID_HEIGHT)
+        
+        // Convert dB to a 0-1 value where 0dB=0.0 and -60dB=1.0
+        float normalized = -db / spectrumDBRange;
+        
+        // Convert to screen Y: 0.0 -> top, 1.0 -> bottom
+        int16_t y = vOffset + (int16_t)(normalized * GRID_HEIGHT);
+        
+        // ABSOLUTE CLAMPING - ensure it stays within grid
+        if(y < vOffset) y = vOffset;
+        if(y > vOffset + GRID_HEIGHT) y = vOffset + GRID_HEIGHT;
+        
+        // Draw line from previous point to current point
+        if(i > 1) {
+            tft.drawLine(prevX, prevY, x, y, color);
+        }
+        
+        prevX = x;
+        prevY = y;
+    }
+}
+
+void drawSpectrumLabels(void) {
+    // Draw a solid background for the top bar to prevent flickering
+    //testest tft.fillRect(0, 0, TFT_WIDTH, vOffset, ILI9341_BLACK);
+    
+    // Draw window type with background
+    //testtest tft.fillRect(240, 0, 50, vOffset, ILI9341_BLACK);
+    tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+    tft.setCursor(200, 4);
+    switch(spectrumWindow) {
+        case WINDOW_RECTANGULAR: tft.print("RECT"); break;
+        case WINDOW_HAMMING: tft.print("HAMM"); break;
+        case WINDOW_HANNING: tft.print("HANN"); break;
+    }
+    
+    // Draw max frequency with background
+    tft.fillRect(100, 0, 80, vOffset, ILI9341_BLACK);
+    tft.setCursor(100, 4);
+    if(spectrumMaxFreq < 1000) {
+        tft.print((int)spectrumMaxFreq);
+        tft.print("Hz");
+    } else {
+        tft.print(spectrumMaxFreq/1000, 1);
+        tft.print("kHz");
+    }
+    
+    // Draw hold indicator if needed
+    if(hold) {
+        tft.fillRect(hOffset + 100, 0, 40, vOffset, ILI9341_RED);
+        tft.setTextColor(ILI9341_WHITE, ILI9341_RED);
+        tft.setCursor(hOffset + 102, 4);
+        tft.print("HOLD");
+    }
 }

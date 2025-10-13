@@ -7,6 +7,7 @@
 #include "interface.h"
 #include "zconfig.h"
 #include "capture.h"
+#include "spectrum.h"
 
 void resetParam(void);
 void changeXCursor(int16_t xPos);
@@ -244,9 +245,10 @@ uint16_t calculateMinZoomForBuffer(void) {
 // ------------------------
 void incrementZoom(void) {
 // ------------------------
-    // Store current center position
     float zoomMultiplier = getZoomMultiplier();
     uint16_t visibleSamples = (uint16_t)(GRID_WIDTH * zoomMultiplier);
+    
+    // Calculate TRUE center position in the buffer (0 to currentBufferSize-1)
     uint16_t centerSample = xCursor + visibleSamples / 2;
     
     uint16_t newZoom = zoomFactor;
@@ -255,34 +257,33 @@ void incrementZoom(void) {
         if(zoomFactor < 10) {
             newZoom++;
         } else {
-			newZoom= (newZoom/10)*10;
+            newZoom = (newZoom/10)*10;
             newZoom += 10;
             if(newZoom > ZOOM_MAX) newZoom = ZOOM_MAX;
         }
         
-        // Check if zoom is compatible with current buffer
         if(!isZoomCompatibleWithBuffer(newZoom)) {
-    // Try to automatically increase buffer size (go to LARGER buffer)
-    if(bufferMode > BUF_FULL) {  // If we're not at FULL (0) already
-	 uint16_t desiredZoom = newZoom;
-        incrementBufferSize();   // This will increase buffer size
-		zoomFactor = desiredZoom;
-        saveParameter(PARAM_ZOOM, zoomFactor);
-        adjustXCursorForZoom();
-        repaintLabels();
-        return;                  // Let buffer change handle zoom next time
-    } else {
-        // Already at maximum buffer, limit zoom
-        newZoom = calculateMaxZoomForBuffer();
-    }
-}
+            if(bufferMode > BUF_FULL) {
+                uint16_t desiredZoom = newZoom;
+                incrementBufferSize();
+                zoomFactor = desiredZoom;
+                saveParameter(PARAM_ZOOM, zoomFactor);
+                adjustXCursorForZoom();
+                repaintLabels();
+                return;
+            } else {
+                newZoom = calculateMaxZoomForBuffer();
+            }
+        }
         
         if(newZoom != zoomFactor) {
             zoomFactor = newZoom;
             
-            // Adjust xCursor to maintain center position
+            // Calculate new visible samples with new zoom
             float newZoomMultiplier = getZoomMultiplier();
             uint16_t newVisibleSamples = (uint16_t)(GRID_WIDTH * newZoomMultiplier);
+            
+            // Calculate new xCursor to maintain the SAME CENTER position
             uint16_t newXCursor = centerSample - newVisibleSamples / 2;
             
             // Ensure xCursor stays within bounds
@@ -303,9 +304,10 @@ void incrementZoom(void) {
 // ------------------------
 void decrementZoom(void) {
 // ------------------------
-    // Store current center position
     float zoomMultiplier = getZoomMultiplier();
     uint16_t visibleSamples = (uint16_t)(GRID_WIDTH * zoomMultiplier);
+    
+    // Calculate TRUE center position in the buffer
     uint16_t centerSample = xCursor + visibleSamples / 2;
     
     uint16_t newZoom = zoomFactor;
@@ -314,19 +316,19 @@ void decrementZoom(void) {
         if(zoomFactor <= 10) {
             newZoom--;
         } else {
-			newZoom= (newZoom/10)*10;
+            newZoom = (newZoom/10)*10;
             newZoom -= 10;
             if(newZoom < 10) newZoom = 10;
         }
         
-        // No automatic buffer decrease when zooming out
-        // Just apply the zoom change
         if(newZoom != zoomFactor) {
             zoomFactor = newZoom;
             
-            // Adjust xCursor to maintain center position
+            // Calculate new visible samples with new zoom
             float newZoomMultiplier = getZoomMultiplier();
             uint16_t newVisibleSamples = (uint16_t)(GRID_WIDTH * newZoomMultiplier);
+            
+            // Calculate new xCursor to maintain the SAME CENTER position
             uint16_t newXCursor = centerSample - newVisibleSamples / 2;
             
             // Ensure xCursor stays within bounds
@@ -405,24 +407,31 @@ void resetParam(void)	{
 				}
 			break;
 		case L_window:
-			// set x in the middle based on current buffer size and zoom
-			{
-				float zoomMultiplier = getZoomMultiplier();
-				uint16_t visibleSamples = (uint16_t)(GRID_WIDTH * zoomMultiplier);
+    // set x in the middle based on current buffer size and zoom
+    {
+        float zoomMultiplier = getZoomMultiplier();
+        uint16_t visibleSamples = (uint16_t)(GRID_WIDTH * zoomMultiplier);
+
+        // Ensure visible samples doesn't exceed buffer size
+        if(visibleSamples > currentBufferSize) {
+            visibleSamples = currentBufferSize;
+        }
+
+        // Calculate maximum xCursor position
+        uint16_t maxXCursor = (currentBufferSize > visibleSamples) ? 
+                            (currentBufferSize - visibleSamples) : 0;
+
+        // Center the view - put the buffer center in the middle of the screen
+        uint16_t bufferCenter = currentBufferSize / 2;
+        uint16_t newXCursor = bufferCenter - visibleSamples / 2;
         
-				// Ensure visible samples doesn't exceed buffer size
-				if(visibleSamples > currentBufferSize) {
-					visibleSamples = currentBufferSize;
-				}
+        // Constrain to valid range
+        if(newXCursor > maxXCursor) newXCursor = maxXCursor;
+        if((int16_t)newXCursor < 0) newXCursor = 0;
         
-				// Calculate maximum xCursor position
-				uint16_t maxXCursor = (currentBufferSize > visibleSamples) ? 
-				(currentBufferSize - visibleSamples) : 0;
-        
-			// Center the view in the available range
-			changeXCursor(maxXCursor / 2);
-			}
-			break;
+        changeXCursor(newXCursor);
+    }
+    break;
 		case L_vPos1:
 			// zero the trace base
 			calculateTraceZero(0);
@@ -619,7 +628,10 @@ void incrementWaves(void) {
 			saveParameter(PARAM_WAVES + 1, waves[1]);
 		}
 	} else if (operationMode == MODE_XY) {
-		// Current: XY mode -> Next: none
+		// Current: XY mode -> Next: spectrum
+		setOperationMode(MODE_SPECTRUM);
+	} else if (operationMode == MODE_SPECTRUM) {
+		// Current: Spectrum mode -> Next: none
 		setOperationMode(MODE_OSCILLOSCOPE);
 		waves[0] = false;
 		waves[1] = false;
@@ -896,6 +908,10 @@ void setOperationMode(uint8_t newMode) {
             waves[0] = true;
             waves[1] = true;
             break;
+		case MODE_SPECTRUM:
+			directSamplingMode = false;
+			if(!spectrumDataA1) updateSpectrumAnalysis();
+		break;
     }
     
     // Save if mode actually changed

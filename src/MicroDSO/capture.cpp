@@ -7,9 +7,6 @@
 
 #include "MicroDSO.h"
 #include "io.h"
- 
-#define DIGITAL_D1_MASK 0x2000
-#define DIGITAL_D2_MASK 0x4000
 
 void triggerISR(void);
 void startScanTimeout(int16_t mSec);
@@ -451,5 +448,27 @@ void updateDirectDisplay(void) {
         drawXYWaveform(directSampleCount);
     } else {
         drawWaves();
+    }
+}
+
+void sampleForSpectrum(void) {
+    // Use the existing shared buffers but as circular buffer
+    static bool bufferWrapped = false;
+    
+    // Sample continuously into the shared buffer
+    for(int i = 0; i < 32; i++) {
+        ch1Capture[sIndex] = adc_read(ADC1);
+        ch2Capture[sIndex] = adc_read(ADC2);
+        
+        uint16_t digital_val = 0;
+        if(digitalRead(DG_CH1) == HIGH) digital_val |= DIGITAL_D1_MASK;
+        if(digitalRead(DG_CH2) == HIGH) digital_val |= DIGITAL_D2_MASK;
+        bitStore[sIndex] = digital_val;
+        
+        sIndex++;
+        if(sIndex >= currentBufferSize) {
+            sIndex = 0;
+            bufferWrapped = true; // Mark that we have a complete buffer
+        }
     }
 }

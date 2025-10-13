@@ -27,4 +27,6 @@ void setDirectSampling(bool enable);
 void setXYMode(bool enable);
 void resetParam(void);
 void updateDirectDisplay(void);
+void updateSpectrumAnalysis(void);
+void cleanupSpectrum(void);
 #endif

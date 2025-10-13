@@ -7,6 +7,7 @@
 #include "zconfig.h"
 #include "interface.h"
 #include "buttons.h"
+#include "spectrum.h"
 
 
 uint8_t triggerType;
@@ -100,69 +101,123 @@ void MicroDSO_Loop(void) {
     
     // Handle mode transitions
     static uint8_t lastOperationMode = MODE_OSCILLOSCOPE;
-	if(operationMode != lastOperationMode) {
-		clearWaves();
-		lastOperationMode = operationMode;
-		if(samplingActive) {
-			stopSampling();
+    if(operationMode != lastOperationMode) {
+        clearWaves();
+        lastOperationMode = operationMode;
+        if(samplingActive) {
+            stopSampling();
         }
+        
+       // When switching TO spectrum mode
+if(operationMode == MODE_SPECTRUM && lastOperationMode != MODE_SPECTRUM) {
+    // Reset sampling for continuous operation
+    sIndex = 0;
+    keepSampling = true;
+    samplingActive = false; // Let spectrum mode handle its own sampling
+    clearWaves();
+}
+
+// When switching FROM spectrum mode  
+if(operationMode != MODE_SPECTRUM && lastOperationMode == MODE_SPECTRUM) {
+    // Reset for normal oscilloscope operation
+    sIndex = 0;
+    cleanupSpectrum();
+}
     }
     
     // Handle sampling modes - NON-BLOCKING
     if(!hold) {
-        if(directSamplingMode) {
-            // Real-time direct sampling (non-blocking)
+        // Handle XY mode separately (it uses direct sampling)
+        if(operationMode == MODE_XY) {
+            // XY mode uses direct sampling
             indicateCapturing();
             sampleSinglePoint();
             updateDirectDisplay();
             indicateCapturingDone();
-        } 
-        else if(triggerType == TRIGGER_AUTO) {
-            if(!samplingActive) {
-                startSampling(true); // Start with timeout
-                indicateCapturing();
-            }
-            
-            // Process sampling in small chunks
-            processSampling();
-            
-            if(isSamplingComplete()) {
-                indicateCapturingDone();
-                drawWaves();
-                if(triggered) blinkLED();
-            }
         }
-        else if(triggerType == TRIGGER_NORM) {
-            if(!samplingActive) {
-                startSampling(false); // Start without timeout
+        // Handle Spectrum mode
+	else if(operationMode == MODE_SPECTRUM) {
+    static unsigned long lastSpectrumUpdate = 0;
+    static bool spectrumInitialized = false;
+    
+    // Initialize spectrum mode safely
+    if(!spectrumInitialized) {
+        DBG_PRINTLN("Initializing spectrum mode...");
+        sIndex = 0; // Reset buffer index
+        samplingActive = false; // Don't use normal sampling
+        spectrumInitialized = true;
+        clearWaves();
+    }
+    
+    // SIMPLIFIED: Just draw without complex processing first
+    indicateCapturing();
+    
+    // Basic sampling without FFT to test
+    if(millis() - lastSpectrumUpdate > 200) {
+        // Simple test - just draw something
+        drawWaves();
+        lastSpectrumUpdate = millis();
+        indicateCapturingDone();
+        
+        DBG_PRINTLN("Spectrum mode active"); // Debug output
+    }
+}
+        // Handle normal oscilloscope modes
+        else {
+            if(directSamplingMode) {
+                // Real-time direct sampling (non-blocking)
                 indicateCapturing();
-            }
-            
-            processSampling();
-            
-            if(isSamplingComplete()) {
+                sampleSinglePoint();
+                updateDirectDisplay();
                 indicateCapturingDone();
-                drawWaves();
-                if(triggered) blinkLED();
+            } 
+            else if(triggerType == TRIGGER_AUTO) {
+                if(!samplingActive) {
+                    startSampling(true); // Start with timeout
+                    indicateCapturing();
+                }
+                
+                // Process sampling in small chunks
+                processSampling();
+                
+                if(isSamplingComplete()) {
+                    indicateCapturingDone();
+                    drawWaves();
+                    if(triggered) blinkLED();
+                }
             }
-        }
-        else if(triggerType == TRIGGER_SINGLE && !singleTriggerDone) {
-            if(!samplingActive) {
-                clearWaves();
-                startSampling(false);
-                indicateCapturing();
+            else if(triggerType == TRIGGER_NORM) {
+                if(!samplingActive) {
+                    startSampling(false); // Start without timeout
+                    indicateCapturing();
+                }
+                
+                processSampling();
+                
+                if(isSamplingComplete()) {
+                    indicateCapturingDone();
+                    drawWaves();
+                    if(triggered) blinkLED();
+                }
             }
-            
-            processSampling();
-            
-            if(isSamplingComplete()) {
-                indicateCapturingDone();
-                hold = true;
-                singleTriggerDone = true;
-                repaintLabels();
-                drawWaves();
-                blinkLED();
-                dumpSamples();
+            else if(triggerType == TRIGGER_SINGLE && !singleTriggerDone) {
+                if(!samplingActive) {
+                    clearWaves();
+                    startSampling(false);
+                    indicateCapturing();
+                }
+                
+                processSampling();
+                
+                if(isSamplingComplete()) {
+                    indicateCapturingDone();
+                    hold = true;
+                    singleTriggerDone = true;
+                    repaintLabels();
+                    drawWaves();
+                    blinkLED();
+                    dumpSamples();
+                }
             }
         }
     } else {
@@ -184,7 +239,14 @@ void MicroDSO_Loop(void) {
         drawLabels();
         paintLabels = false;
     }
-
-  // freeze display if requested
-  //while(hold);
+    
+    // Special handling for spectrum mode display updates
+    if(operationMode == MODE_SPECTRUM && !hold) {
+        // Force more frequent display updates in spectrum mode for smoother visualization
+        static unsigned long lastSpectrumDraw = 0;
+        if(millis() - lastSpectrumDraw > 100) { // Update every 100ms
+            drawWaves();
+            lastSpectrumDraw = millis();
+        }
+    }
 }

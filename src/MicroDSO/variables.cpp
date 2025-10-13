@@ -45,3 +45,13 @@ uint16_t directSampleCount = 0;
 unsigned long lastDirectDrawTime = 0;
 bool singleTriggerDone = false;
 bool xylines = false;  // Default: dots only in XY mode
+
+// Spectrum Analyzer
+uint8_t spectrumWindow = 1; // Default to Hamming window
+uint16_t spectrumBinCount = 512; // FFT bins
+float* spectrumDataA1 = NULL;
+float* spectrumDataA2 = NULL;
+float* spectrumDataD1 = NULL;
+float* spectrumDataD2 = NULL;
+float spectrumMaxFreq = 10000.0; // 10kHz default max frequency
+float spectrumDBRange = 60.0; // 60dB dynamic range

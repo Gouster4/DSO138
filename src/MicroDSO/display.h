@@ -51,4 +51,9 @@ void setXYMode(bool enable);
 uint16_t getDigitalIntensity(uint16_t currentIndex, uint8_t channel, uint8_t window);
 uint8_t getPointSizeFromDigital(uint16_t index);
 uint16_t getXYColorForPoint(uint16_t index, uint8_t baseBrightness);
+void drawSpectrum(void);
+void drawSpectrumAxisLabels(void);
+void drawChannelSpectrum(float* spectrum, uint16_t color, const char* label);
+void drawSpectrumLabels(void);
+void drawSimpleSpectrum(float* spectrum, uint16_t color);
 #endif

@@ -21,5 +21,6 @@ void setSamplingRate(uint8_t timeBase);
 void setTriggerRising(bool rising);
 void sampleSinglePoint(void);
 void updateDirectDisplay(void);
+void sampleForSpectrum(void);
 
 #endif
