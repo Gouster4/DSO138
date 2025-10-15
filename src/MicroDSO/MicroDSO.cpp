@@ -121,7 +121,6 @@ if(operationMode == MODE_SPECTRUM && lastOperationMode != MODE_SPECTRUM) {
 if(operationMode != MODE_SPECTRUM && lastOperationMode == MODE_SPECTRUM) {
     // Reset for normal oscilloscope operation
     sIndex = 0;
-    cleanupSpectrum();
 }
     }
     
@@ -136,32 +135,28 @@ if(operationMode != MODE_SPECTRUM && lastOperationMode == MODE_SPECTRUM) {
             indicateCapturingDone();
         }
         // Handle Spectrum mode
-	else if(operationMode == MODE_SPECTRUM) {
-    static unsigned long lastSpectrumUpdate = 0;
-    static bool spectrumInitialized = false;
-    
-    // Initialize spectrum mode safely
-    if(!spectrumInitialized) {
-        DBG_PRINTLN("Initializing spectrum mode...");
-        sIndex = 0; // Reset buffer index
-        samplingActive = false; // Don't use normal sampling
-        spectrumInitialized = true;
-        clearWaves();
+// Handle Spectrum mode
+else if(operationMode == MODE_SPECTRUM) {
+    // Force sampling to be active
+    if(!samplingActive) {
+        startSampling(true);
+        samplingActive = true; // Force it to be active
+        indicateCapturing();
     }
     
-    // SIMPLIFIED: Just draw without complex processing first
-    indicateCapturing();
+    // Process a small chunk of sampling
+    processSampling();
     
-    // Basic sampling without FFT to test
-    if(millis() - lastSpectrumUpdate > 200) {
-        // Simple test - just draw something
-        drawWaves();
-        lastSpectrumUpdate = millis();
+    // ALWAYS draw, no matter what
+    drawWaves();
+    
+    // If sampling completed, restart it immediately
+    if(isSamplingComplete()) {
         indicateCapturingDone();
-        
-        DBG_PRINTLN("Spectrum mode active"); // Debug output
+        samplingActive = false;
     }
 }
+
         // Handle normal oscilloscope modes
         else {
             if(directSamplingMode) {

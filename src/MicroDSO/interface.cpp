@@ -909,9 +909,10 @@ void setOperationMode(uint8_t newMode) {
             waves[1] = true;
             break;
 		case MODE_SPECTRUM:
-			directSamplingMode = false;
-			if(!spectrumDataA1) updateSpectrumAnalysis();
-		break;
+            directSamplingMode = false;
+            // Reset spectrum buffers when entering spectrum mode
+            cleanupSpectrum();
+            break;
     }
     
     // Save if mode actually changed

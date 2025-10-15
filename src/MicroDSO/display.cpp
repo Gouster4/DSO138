@@ -5,12 +5,13 @@
 #include "capture.h" 
 #include "MicroDSO.h"
 #include "io.h"
-#include "spectrum.h"
+
 
 //#include <Adafruit_GFX.h>
 #include "../Adafruit_GFX_/Adafruit_GFX_.h"
 #include "src/TFTLib/Adafruit_TFTLCD_8bit_STM32.h"
 
+#include "spectrum.h"
 Adafruit_TFTLCD_8bit_STM32 tft;
 
 // rendered waveform data is stored here for erasing
@@ -1808,187 +1809,112 @@ void drawXYWaveform(uint16_t pointCount) {
 	tft.drawCircle(screenX, screenY, currentSize + 1, ILI9341_WHITE);
 }
 
+
+// ==================== SPECTRUM ANALYZER FUNCTIONS ====================
+
 void drawSpectrum(void) {
-    static unsigned long lastSpectrumUpdate = 0;
-    static unsigned long lastFullDraw = 0;
-    
     if(operationMode != MODE_SPECTRUM) return;
     
-    // Only update spectrum analysis periodically (every 200ms)
-    if(millis() - lastSpectrumUpdate > 200) {
+    static unsigned long lastUpdate = 0;
+    unsigned long now = millis();
+    
+    // Update FFT analysis (but not too frequently)
+    if(now - lastUpdate >= 200) {
         updateSpectrumAnalysis();
-        lastSpectrumUpdate = millis();
+        lastUpdate = now;
     }
     
-    // Only redraw the entire screen periodically (every 100ms) to reduce flicker
-    if(millis() - lastFullDraw > 100) {
-        
-        // CLEAR THE ENTIRE SCREEN
-        tft.fillScreen(ILI9341_BLACK);
-        
-        // Now draw the spectrum display from scratch
-        drawGrid();
-        
-		drawLabels();
-		drawSpectrumLabels();
-		
-        // Draw frequency axis labels
-        drawSpectrumAxisLabels();
-        
-        // Check if we have spectrum data
-        bool hasData = spectrumDataA1 || spectrumDataA2 || spectrumDataD1 || spectrumDataD2;
-        
-        if(!hasData) {
-            // No data yet, show message
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setCursor(100, GRID_HEIGHT/2 + vOffset);
-            tft.print("Acquiring data...");
-        } else {
-            // Draw all channel spectra - IN SPECTRUM MODE, SHOW ALL CHANNELS
-            
-            if(spectrumDataA1) {
-                drawChannelSpectrum(spectrumDataA1, AN_SIGNAL1, "A1");
-            }
-            if(spectrumDataA2) {
-                drawChannelSpectrum(spectrumDataA2, AN_SIGNAL2, "A2");
-            }
-            if(spectrumDataD1) {
-                drawChannelSpectrum(spectrumDataD1, DG_SIGNAL1, "D1");
-            }
-            if(spectrumDataD2) {
-                drawChannelSpectrum(spectrumDataD2, DG_SIGNAL2, "D2");
-            }
-        }
-        
-        lastFullDraw = millis();
-    }
-}
-
-void drawSimpleSpectrum(float* spectrum, uint16_t color) {
-    if(!spectrum) return;
+    // DON'T clear the screen here - let the main loop handle screen clearing
+    // Just draw the grid and spectrum on top of whatever is there
+    drawGrid();
+    drawSpectrumAxisLabels();
     
-    for(uint16_t i = 1; i < spectrumBinCount/4 && i < GRID_WIDTH; i++) {
-        float db = spectrum[i];
-        db = constrain(db, -spectrumDBRange, 0);
-        int16_t y = vOffset + GRID_HEIGHT - ((db + spectrumDBRange) * GRID_HEIGHT / spectrumDBRange);
-        y = constrain(y, vOffset, vOffset + GRID_HEIGHT);
-        
-        tft.drawPixel(hOffset + i, y, color);
+    // Title - always visible
+    tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+    tft.setCursor(100, 10);
+    tft.print("SPECTRUM ANALYZER");
+    
+    // Show RUN/HOLD status clearly
+    if(hold) {
+        tft.setTextColor(ILI9341_WHITE, ILI9341_RED);
+        tft.setCursor(hOffset + 2, 4);
+        tft.print(" HOLD ");
+    } else {
+        tft.setTextColor(ILI9341_GREEN, ILI9341_BLACK);
+        tft.setCursor(hOffset + 2, 4);
+        tft.print(" RUN ");
+    }
+    
+    // Always draw all channels - even if they're just noise floor
+    if(spectrumDataA1) {
+        drawSpectrumLine(spectrumDataA1, spectrumBinCount/2, AN_SIGNAL1);
+    }
+    if(spectrumDataA2) {
+        drawSpectrumLine(spectrumDataA2, spectrumBinCount/2, AN_SIGNAL2);
+    }
+    if(spectrumDataD1) {
+        drawSpectrumLine(spectrumDataD1, spectrumBinCount/2, DG_SIGNAL1);
+    }
+    if(spectrumDataD2) {
+        drawSpectrumLine(spectrumDataD2, spectrumBinCount/2, DG_SIGNAL2);
     }
 }
 
 void drawSpectrumAxisLabels(void) {
-    // Clear the bottom label area first
-    tft.fillRect(0, GRID_HEIGHT + vOffset, TFT_WIDTH, vOffset, ILI9341_BLACK);
-    
-    // Draw dB scale on left (0dB at top, -spectrumDBRange at bottom)
     tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-    tft.setTextSize(1);
     
-    // Draw dB markers
-    for(int db = 0; db <= spectrumDBRange; db += 20) {
-        // Calculate Y position: 0dB at top, -60dB at bottom
-        int y = vOffset + (db * GRID_HEIGHT / spectrumDBRange);
-        tft.setCursor(5, y - 4);
-        tft.print("-");
-        tft.print(db);
-        tft.print("dB");
-    }
+    // Frequency axis
+    tft.setCursor(hOffset + 10, GRID_HEIGHT + vOffset + 5);
+    tft.print("0Hz");
+    tft.setCursor(hOffset + GRID_WIDTH - 30, GRID_HEIGHT + vOffset + 5);
+    tft.print("Fs/2");
     
-    // Draw frequency scale on bottom
-    for(int freq = 0; freq <= spectrumMaxFreq; freq += spectrumMaxFreq/5) {
-        int x = hOffset + (freq * GRID_WIDTH / spectrumMaxFreq);
-        tft.setCursor(x - 15, GRID_HEIGHT + vOffset + 5);
-        if(freq < 1000) {
-            tft.print(freq);
-            tft.print("Hz");
+    // Amplitude axis
+    tft.setCursor(5, vOffset + 5);
+    tft.print("0dB");
+    tft.setCursor(5, vOffset + GRID_HEIGHT - 10);
+    tft.print("-80dB");
+}
+
+
+// Draw a spectrum line
+void drawSpectrumLine(float* magnitude, uint16_t bins, uint16_t color) {
+    if(!magnitude) return;
+    
+    int16_t prev_x = hOffset;
+    int16_t prev_y = vOffset + GRID_HEIGHT;
+    
+    uint16_t maxBins = (bins < (uint16_t)GRID_WIDTH) ? bins : (uint16_t)GRID_WIDTH;
+    
+    for(uint16_t i = 1; i < maxBins; i++) {
+        int16_t x = hOffset + (i * GRID_WIDTH) / maxBins;
+        
+        float db = magnitude[i];
+        
+        // Convert to screen coordinates
+        int16_t y;
+        if(db <= -spectrumDBRange) {
+            y = vOffset + GRID_HEIGHT;
         } else {
-            tft.print(freq/1000);
-            tft.print("kHz");
+            y = vOffset + GRID_HEIGHT - (int16_t)((db + spectrumDBRange) * GRID_HEIGHT / spectrumDBRange);
         }
-    }
-}
-
-
-void drawChannelSpectrum(float* spectrum, uint16_t color, const char* label) {
-    if(!spectrum) return;
-    
-    static uint8_t labelY = 5;
-    uint16_t labelYOffset = labelY;
-    labelY += 12;
-    if(labelY > 30) labelY = 5;
-    
-    // Draw channel label
-    tft.setTextColor(color, ILI9341_BLACK);
-    tft.setCursor(hOffset + 5, vOffset + labelYOffset);
-    tft.print(label);
-    
-    int16_t prevX = hOffset;
-    int16_t prevY = vOffset + GRID_HEIGHT; // Start at bottom (-60dB)
-    
-    // Draw the spectrum line
-    for(uint16_t i = 1; i < spectrumBinCount/4 && i < GRID_WIDTH; i++) {
-        // Convert frequency bin to x position
-        int16_t x = hOffset + (i * GRID_WIDTH) / (spectrumBinCount/4);
+        y = constrain(y, vOffset, vOffset + GRID_HEIGHT);
         
-        // Get dB value
-        float db = spectrum[i];
-        
-        // SIMPLE, FOOLPROOF Y-AXIS CALCULATION:
-        // We have dB range: 0dB (max) to -60dB (min)
-        // We want: 0dB -> top of grid (vOffset)
-        //         -60dB -> bottom of grid (vOffset + GRID_HEIGHT)
-        
-        // Convert dB to a 0-1 value where 0dB=0.0 and -60dB=1.0
-        float normalized = -db / spectrumDBRange;
-        
-        // Convert to screen Y: 0.0 -> top, 1.0 -> bottom
-        int16_t y = vOffset + (int16_t)(normalized * GRID_HEIGHT);
-        
-        // ABSOLUTE CLAMPING - ensure it stays within grid
-        if(y < vOffset) y = vOffset;
-        if(y > vOffset + GRID_HEIGHT) y = vOffset + GRID_HEIGHT;
-        
-        // Draw line from previous point to current point
+        // Draw thick lines so they're visible
         if(i > 1) {
-            tft.drawLine(prevX, prevY, x, y, color);
+            tft.drawLine(prev_x, prev_y, x, y, color);
+            // Draw a second line for thickness
+            if(y != prev_y) {
+                tft.drawLine(prev_x+1, prev_y, x+1, y, color);
+            }
         }
         
-        prevX = x;
-        prevY = y;
-    }
-}
-
-void drawSpectrumLabels(void) {
-    // Draw a solid background for the top bar to prevent flickering
-    //testest tft.fillRect(0, 0, TFT_WIDTH, vOffset, ILI9341_BLACK);
-    
-    // Draw window type with background
-    //testtest tft.fillRect(240, 0, 50, vOffset, ILI9341_BLACK);
-    tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-    tft.setCursor(200, 4);
-    switch(spectrumWindow) {
-        case WINDOW_RECTANGULAR: tft.print("RECT"); break;
-        case WINDOW_HAMMING: tft.print("HAMM"); break;
-        case WINDOW_HANNING: tft.print("HANN"); break;
-    }
-    
-    // Draw max frequency with background
-    tft.fillRect(100, 0, 80, vOffset, ILI9341_BLACK);
-    tft.setCursor(100, 4);
-    if(spectrumMaxFreq < 1000) {
-        tft.print((int)spectrumMaxFreq);
-        tft.print("Hz");
-    } else {
-        tft.print(spectrumMaxFreq/1000, 1);
-        tft.print("kHz");
-    }
-    
-    // Draw hold indicator if needed
-    if(hold) {
-        tft.fillRect(hOffset + 100, 0, 40, vOffset, ILI9341_RED);
-        tft.setTextColor(ILI9341_WHITE, ILI9341_RED);
-        tft.setCursor(hOffset + 102, 4);
-        tft.print("HOLD");
+        // Draw dots at significant points
+        if(db > -40.0f) {
+            tft.fillCircle(x, y, 1, color);
+        }
+        
+        prev_x = x;
+        prev_y = y;
     }
 }

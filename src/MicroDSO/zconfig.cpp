@@ -147,10 +147,7 @@ void loadConfig(bool reset)	{
     
 	data = EEPROM.read(PARAM_XYLINES);
 	xylines = (data != 0);
-	
-	 if(operationMode != MODE_SPECTRUM) {
-        cleanupSpectrum();
-    }
+
 	
 	DBG_PRINTLN("Loaded config:");
 	DBG_PRINT("Timebase: ");DBG_PRINTLN(currentTimeBase);

@@ -77,14 +77,4 @@ extern uint8_t samplingState;
 extern bool xylines;
 extern uint8_t AN_SIGNAL1_R, AN_SIGNAL1_G, AN_SIGNAL1_B;
 
-// Spectrum analyzer variables
-extern uint8_t spectrumWindow; // 0=Rectangular, 1=Hamming, 2=Hanning
-extern uint16_t spectrumBinCount;
-extern float* spectrumDataA1;
-extern float* spectrumDataA2;
-extern float* spectrumDataD1;
-extern float* spectrumDataD2;
-extern float spectrumMaxFreq;
-extern float spectrumDBRange;
-
 #endif

@@ -53,7 +53,11 @@ uint8_t getPointSizeFromDigital(uint16_t index);
 uint16_t getXYColorForPoint(uint16_t index, uint8_t baseBrightness);
 void drawSpectrum(void);
 void drawSpectrumAxisLabels(void);
-void drawChannelSpectrum(float* spectrum, uint16_t color, const char* label);
-void drawSpectrumLabels(void);
-void drawSimpleSpectrum(float* spectrum, uint16_t color);
+void updateSpectrumAnalysis(void);
+void processChannelFFT(uint8_t channel, uint16_t color);
+void processDigitalFFT(uint8_t channel, uint16_t color);
+void drawSpectrumLine(float* magnitude, uint16_t bins, uint16_t color);
+void fft(float* real, float* imag, uint16_t n);
+void calculateMagnitude(float* real, float* imag, float* magnitude, uint16_t n);
+void applyHammingWindow(float* data, uint16_t n);
 #endif
